@@ -1,6 +1,7 @@
 [Unit]
 Description=RaspberryLink Bluetooth Audio Bootstrapper
 After=bluetooth.service
+After=bluealsa.service
 
 [Service]
 Type=simple
