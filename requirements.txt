@@ -1,3 +1,5 @@
 flask
 obd
 waitress
+PyGObject
+dbus-python
