@@ -1,5 +1,5 @@
 from flask import jsonify
-from raspberrylink import app, software_name, software_version, api_version, obdmanager
+from raspberrylink import app, software_name, software_version, api_version, obdmanager, server_config
 
 
 @app.route('/info/apiver')
@@ -13,10 +13,10 @@ def info_static():
         "vehicle": "",
         "server": software_name,
         "version": software_version,
-        "audio": False,
-        "camera": False,
-        "steamIP": "127.0.0.1",
-        "streamPort": 9999
+        "audio": True,
+        "camera": server_config['camera'].getboolean("enabled"),
+        "steamIP": server_config['camera']['address'],
+        "streamPort": server_config['camera']['port']
 
     }
     return jsonify(obj)

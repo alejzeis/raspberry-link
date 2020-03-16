@@ -10,7 +10,7 @@ setup(
   author=__author__,
   author_email='jython234@gmail.com',
   license='MPL-2.0',
-  url='https://github.com/jython234/raspberrylink',
+  url='https://github.com/jython234/raspberry-link',
   packages=['raspberrylink'],
   install_requires=['flask', 'obd', 'waitress'],
   entry_points={
