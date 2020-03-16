@@ -1,0 +1,10 @@
+[Unit]
+Description=RaspberryLink Information Server (WSGI)
+Wants=raspberrylink-audio.service
+
+[Service]
+Type=simple
+ExecStart=raspilink-server
+
+[Install]
+WantedBy=multi-user.target
