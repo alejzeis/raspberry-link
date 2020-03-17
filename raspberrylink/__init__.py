@@ -3,7 +3,6 @@ from raspberrylink import config
 
 software_name = "Raspberry-link"
 software_version = "1.0.0-pre"
-api_version = 1
 
 from raspberrylink import obd
 

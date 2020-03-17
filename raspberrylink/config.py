@@ -10,12 +10,21 @@ interface=0.0.0.0
 port=8080
 
 [camera]
-; Is there a camera connected on the network? (yes/no)
+; Enable support for cameras connected on the network (or locally)
+enabled=yes
+
+[audio]
+; Enable Bluetooth audio support
+; This only enables Media playback support. To enable calls and handsfree support look below
+enabled=yes 
+; Enable HFP (Handsfree-profile) Bluetooth support
+; This allows calls to be placed and recieved over the bluetooth connection
+; NOTICE: BlueALSA MUST be compiled with the --enable-ofono option, and Ofono must be installed and running
+handsfree-enabled=no
+
+[obd]
+; Enable OBD (On-board diagnostics support)
 enabled=no
-; IP Address of the device streaming the camera feed via GStreamer
-address=127.0.0.1
-; Port of the device streaming the camera feed via GStreamer
-port=8088 
 """
 
 
