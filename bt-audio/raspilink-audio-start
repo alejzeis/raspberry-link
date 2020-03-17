@@ -29,11 +29,11 @@ echo "Now discoverable and pairable"
 
 sleep 2
 
-# Stop current running bluealsa process, as it isn't running with a2dp-sink
+# Try to stop current running bluealsa process, as it isn't running with the correct profiles set
 systemctl stop bluealsa
 rm -rf /var/run/bluealsa/
-# Start new bluealsa process
-/usr/bin/bluealsa -i hci0 -p a2dp-sink &
+# Start new bluealsa process (a2dp-sink to recieve media audio, hfp-ofono to recieve call and SMS information via ofono)
+/usr/bin/bluealsa -i hci0 -p a2dp-sink -p hfp-ofono &
 
 # Put bluetooth interface online
 hciconfig hci0 up
@@ -53,4 +53,5 @@ fi
 
 sleep 2
 printf "Device is discoverable as \"%s\"\n" "$BLUETOOTH_DEVICE_NAME"
-exec /usr/bin/bluealsa-aplay --pcm-buffer-time=1000000 00:00:00:00:00:00
+exec /usr/bin/bluealsa-aplay --pcm-buffer-time=1000000 00:00:00:00:00:00 --profile-a2dp
+# TODO 2nd instance of aplay/arecord with SCO for phone calls

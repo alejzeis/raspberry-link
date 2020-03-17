@@ -15,7 +15,7 @@ enabled=no
 ; IP Address of the device streaming the camera feed via GStreamer
 address=127.0.0.1
 ; Port of the device streaming the camera feed via GStreamer
-port=8088
+port=8088 
 """
 
 
