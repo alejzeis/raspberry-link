@@ -1,16 +1,15 @@
 from flask import Flask
-from raspberrylink import config
+from raspberrylink_server import obd
+from raspberrylink_server import config
 
-software_name = "Raspberry-link"
+software_name = "RaspberryLink-Server"
 software_version = "1.0.0-pre"
-
-from raspberrylink import obd
 
 server_config = config.load_config()
 obdmanager = obd.OBDManager()
 app = Flask(__name__)
 
-from raspberrylink import routes
+from raspberrylink_server import routes
 
 
 def run_server():

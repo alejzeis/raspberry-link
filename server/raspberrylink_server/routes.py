@@ -1,8 +1,11 @@
-from flask import jsonify
-from raspberrylink import app, software_name, software_version, obdmanager, server_config, util
+from flask import jsonify, request
+from raspberrylink_server import app, software_name, software_version, server_config
+from raspberrylink_server import util
 
 api_version_major = 2
 api_version_minor = 1
+
+agents = {}
 
 
 @app.route('/apiver')
@@ -11,6 +14,25 @@ def apiver():
         "major": api_version_major,
         "minor": api_version_minor
     })
+
+
+@app.route('/register_agent')
+def register_agent():
+    if request.args.get('id') is None:
+        return "Parameter \"id\" required.", 400
+    elif request.args.get('type') is None:
+        return "Parameter \"type\" required", 400
+
+    if request.args.get('id') in agents:
+        return "Agent already registered.", 409
+
+    # TODO: Periodically ping Agents to check their state and update in dict
+    agents[request.args.get('id')] = {
+        "ip": request.remote_addr,
+        "type": request.args.get('type')
+    }
+
+    return "", 204
 
 
 @app.route('/feature_request')

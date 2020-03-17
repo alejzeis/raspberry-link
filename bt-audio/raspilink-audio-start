@@ -25,13 +25,14 @@ printf "discoverable on\npairable on\nexit\n" | bluetoothctl > /dev/null
 echo "Now discoverable and pairable"
 
 # Start bluetooth and audio agent
-/usr/lib/raspberrylink/raspilink-bt-agent &
+/usr/lib/raspberrylink-server/raspilink-bt-agent &
 
 sleep 2
 
 # Try to stop current running bluealsa process, as it isn't running with the correct profiles set
 systemctl stop bluealsa
 rm -rf /var/run/bluealsa/
+# TODO: Determine what profiles to use based on config
 # Start new bluealsa process (a2dp-sink to recieve media audio, hfp-ofono to recieve call and SMS information via ofono)
 /usr/bin/bluealsa -i hci0 -p a2dp-sink -p hfp-ofono &
 
