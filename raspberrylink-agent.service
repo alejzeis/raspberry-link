@@ -1,0 +1,10 @@
+[Unit]
+Description=RaspberryLink Node Agent
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/raspilink-agent
+
+[Install]
+WantedBy=multi-user.target

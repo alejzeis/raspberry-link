@@ -7,11 +7,16 @@ default_config = """
 ; Interface for the WSGI HTTP server to bind on
 interface=0.0.0.0
 ; Port for the WSGI HTTP server to bind to
-port=8080
+port=9098
 
 [camera]
-; Enable support for cameras connected on the network (or locally)
+; Enable support for a camera connected on the network (or locally)
 enabled=yes
+
+; Address and port of the Agent on the network with the camera connected
+address=192.168.1.2
+port=9099
+
 
 [audio]
 ; Enable Bluetooth audio support
