@@ -26,7 +26,7 @@ def load_config():
 
     if not exists(config_location):
         print("Configuration not found, writing and loading default...")
-        f = open(config_location)
+        f = open(config_location, 'w')
         f.writelines(default_config)
         f.close()
 
@@ -57,7 +57,7 @@ def run_agent():
     while True:
         data, address = sock.recvfrom(1024)
 
-        if data == "REQSTREAM":
+        if data.decode("UTF-8") == "REQSTREAM":
             print("Received Start Stream Request from " + str(address))
             if stream_process is not None:
                 pass
@@ -66,7 +66,7 @@ def run_agent():
                 gstreamer_command[15] = ("host=" + address[0])
                 stream_process = subprocess.Popen(gstreamer_command)
                 print("Started GStreamer Process")
-        elif data == "STOPSTREAM":
+        elif data.decode("UTF-8") == "STOPSTREAM":
             print("Received Stop Stream Request from " + str(address))
             if not stream_process:
                 pass
