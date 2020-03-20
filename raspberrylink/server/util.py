@@ -14,7 +14,7 @@ def get_current_audio_info():
         return False, 0, "Error obtaining Information"
 
     output = con_cmd.stdout.decode("UTF-8")
-    if output == "Connections":
+    if len(output.split("\n")) < 2:
         return False, 0, "No Device Connected"
     else:
         bluetooth_id = output.split("\n")[1].split("ACL")[1].split("handle")[0].strip()
