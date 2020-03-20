@@ -29,3 +29,33 @@ def feature_request():
         "obd": server_config['obd'].getboolean("enabled")
     }
     return jsonify(obj)
+
+
+@app.route('/checkin')
+def checkin():
+    obd_support = server_config['obd'].getboolena("enabled")
+    audio_support = util.check_audio_running() and server_config['audio'].getboolean("enabled")
+    res_obj = {
+        "coolant": 0,
+        "oil": 0,
+        "mpg": 0,
+        "distance_mil": 0,
+        "current_dtc": 0,
+        "dtc": {},
+        "load": 0,
+        "audio": {
+            "connected": False,
+            "signal": 0,
+            "name": "Unknown"
+        }
+    }
+
+    if obd_support:
+        # TODO: OBD Information
+        pass
+
+    if audio_support:
+        stats = util.get_current_audio_info()
+        res_obj['audio']['connected'], res_obj['audio']['signal'], res_obj['audio']['name'] = stats
+
+    return res_obj
