@@ -1,12 +1,12 @@
 from flask import Flask
 
+import dbus
+dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+
 from raspberrylink.audio import handsfree
 from raspberrylink.server import config, obd
 software_name = "RaspberryLink-Server"
 software_version = "1.0.0-pre"
-
-import dbus
-dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
 obdmanager = None
 handsfree_manager = None
@@ -32,8 +32,6 @@ def run_server():
     from gi.repository import GLib
 
     from threading import Thread
-
-    import dbus.mainloop.glib
 
     t = Thread(target=_serve)
     t.start()
