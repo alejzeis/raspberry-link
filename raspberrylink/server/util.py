@@ -14,21 +14,15 @@ def get_current_audio_info():
         return False, 0, "Error obtaining Information"
 
     output = con_cmd.stdout.decode("UTF-8")
-    if len(output.split("\n")) < 2:
-        return False, 0, "No Device Connected"
-    else:
+    if len(output.split("\n")) > 2:
         bluetooth_id = output.split("\n")[1].split("ACL")[1].split("handle")[0].strip()
-        lq_cmd = run("hcitool lq " + bluetooth_id, stdout=PIPE, stderr=PIPE, shell=True)
-        if lq_cmd.returncode != 0:
-            print("Non-zero return code from \"hcitool lq\"")
-            return False, 0, "Error obtaining Information"
-
-        lq = int(lq_cmd.stdout.decode("UTF-8").split(" ")[1].strip())
         info_cmd = run("hcitool info " + bluetooth_id + " | grep \"Device Name\"", stdout=PIPE, stderr=PIPE, shell=True)
 
         if info_cmd.returncode != 0:
             print("Non-zero return code from \"hcitool lq\"")
-            return True, lq, "Error obtaining Information"
+            return True, "Error obtaining Information"
 
-        bluetooth_name = info_cmd.stdout.decode("UTF-8").split(" ")[1]
-        return True, lq, bluetooth_name
+        bluetooth_name = info_cmd.stdout.decode("UTF-8").split(" ")[2]
+        return True, bluetooth_name
+    else:
+        return False, "No Device Connected"

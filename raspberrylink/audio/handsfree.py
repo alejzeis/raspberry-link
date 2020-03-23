@@ -17,6 +17,8 @@ class HandsfreeManager:
 
 	dbus_loop_thread = None
 
+	dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+
 	def __init__(self):
 		self.dbus_loop_thread = Thread(target=self._dbus_main_loop, daemon=True)
 
