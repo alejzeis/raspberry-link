@@ -1,28 +1,15 @@
-from gi.repository import GLib
-
-from threading import Thread
-
 import dbus
 import dbus.mainloop.glib
-import time
-import sys
 
 
 class HandsfreeManager:
-	dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-
 	bus = dbus.SystemBus()
 	manager = dbus.Interface(bus.get_object('org.ofono', '/'),
 							 'org.ofono.Manager')
 	# TODO: Support for multiple active calls?
 	current_call = ""
 
-	dbus_loop_thread = None
-
 	def __init__(self):
-		GLib.threads_init()
-		self.dbus_loop_thread = Thread(target=self._dbus_main_loop, daemon=True)
-
 		modems = self.manager.GetModems()
 		modem = modems[0][0]
 
@@ -33,8 +20,6 @@ class HandsfreeManager:
 		vcmanager.connect_to_signal("CallAdded", self._call_added)
 
 		vcmanager.connect_to_signal("CallRemoved", self._call_removed)
-
-		self.dbus_loop_thread.start()
 
 	def answer_call(self, path):
 		call = dbus.Interface(self.bus.get_object('org.ofono', path), 'org.ofono.VoiceCall')
@@ -63,7 +48,3 @@ class HandsfreeManager:
 
 	def _call_removed(self, path):
 		print("Call Removed: " + path)
-
-	def _dbus_main_loop(self):
-		mainloop = GLib.MainLoop()
-		mainloop.run()
