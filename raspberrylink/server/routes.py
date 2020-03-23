@@ -50,6 +50,7 @@ def checkin():
         },
         "call": {
             "active": False,
+            "signal_quality": 0,
             "path": ""
         }
     }
@@ -60,7 +61,7 @@ def checkin():
 
     if audio_support:
         stats = util.get_current_audio_info()
-        res_obj['audio']['connected'], res_obj['audio']['name'] = stats
+        res_obj['audio']['connected'], res_obj['audio']['signal_quality'], res_obj['audio']['name'] = stats
 
     if audio_support and server_config['audio'].getboolean("handsfree-enabled"):
         if handsfree_manager.current_call != "":
