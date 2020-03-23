@@ -12,7 +12,7 @@ setup(
   license='MPL-2.0',
   url='https://github.com/jython234/raspberry-link',
   packages=['raspberrylink', 'raspberrylink.server'],
-  install_requires=['flask', 'obd', 'waitress'],
+  install_requires=['flask', 'obd', 'waitress', 'dbus-python', 'PyGObject'],
   entry_points={
     'console_scripts': [
       'raspilink-server=raspberrylink.server:run_server',

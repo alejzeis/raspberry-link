@@ -1,5 +1,6 @@
-from flask import jsonify
+from flask import jsonify, request
 from raspberrylink.server import app, software_name, software_version, server_config
+from raspberrylink.server import obdmanager, handsfree_manager
 from raspberrylink.server import util
 
 api_version_major = 3
@@ -33,7 +34,7 @@ def feature_request():
 
 @app.route('/checkin')
 def checkin():
-    obd_support = server_config['obd'].getboolena("enabled")
+    obd_support = server_config['obd'].getboolean("enabled")
     audio_support = util.check_audio_running() and server_config['audio'].getboolean("enabled")
     res_obj = {
         "coolant": 0,
@@ -47,6 +48,10 @@ def checkin():
             "connected": False,
             "signal": 0,
             "name": "Unknown"
+        },
+        "call": {
+            "active": False,
+            "path": ""
         }
     }
 
@@ -58,4 +63,40 @@ def checkin():
         stats = util.get_current_audio_info()
         res_obj['audio']['connected'], res_obj['audio']['signal'], res_obj['audio']['name'] = stats
 
+    if audio_support and server_config['audio'].getboolean("handsfree-enabled"):
+        if handsfree_manager.current_call != "":
+            res_obj['call']['active'] = True
+            res_obj['call']['path'] = handsfree_manager.current_call
+
+
     return res_obj
+
+
+@app.route('/calls/answer')
+def answer_call():
+    if not (util.check_audio_running() and server_config['audio'].getboolean("handsfree-enabled")):
+        return "Handsfree support not enabled or Audio Service is offline", 500
+
+    path = request.args.get("path", None)
+    if path is None:
+        return "Required argument \"path\" missing", 400
+
+    if handsfree_manager.answer_call(path):
+        return "", 204
+    else:
+        return "Failed to answer call", 500
+
+
+@app.route('/calls/hangup')
+def hangup_call():
+    if not (util.check_audio_running() and server_config['audio'].getboolean("handsfree-enabled")):
+        return "Handsfree support not enabled or Audio Service is offline", 500
+
+    path = request.args.get("path", None)
+    if path is None:
+        return "Required argument \"path\" missing", 400
+
+    if handsfree_manager.hangup_call(path):
+        return "", 204
+    else:
+        return "Failed to hangup call", 500

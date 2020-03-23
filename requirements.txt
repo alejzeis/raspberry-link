@@ -3,4 +3,3 @@ obd
 waitress
 PyGObject
 dbus-python
-requests

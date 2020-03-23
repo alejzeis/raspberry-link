@@ -32,9 +32,14 @@ sleep 2
 # Try to stop current running bluealsa process, as it isn't running with the correct profiles set
 systemctl stop bluealsa
 rm -rf /var/run/bluealsa/
-# TODO: Determine what profiles to use based on config
+
 # Start new bluealsa process (a2dp-sink to recieve media audio, hfp-ofono to recieve call and SMS information via ofono)
-/usr/bin/bluealsa -i hci0 -p a2dp-sink -p hfp-ofono &
+# Check if handsfree support for calls is enabled, then we need hfp-ofono profile enabled, otherwise we don't
+if raspilink-check-handsfree; then
+  /usr/bin/bluealsa -i hci0 -p a2dp-sink -p hfp-ofono &
+else
+  /usr/bin/bluealsa -i hci0 -p a2dp-sink &
+fi
 
 # Put bluetooth interface online
 hciconfig hci0 up
