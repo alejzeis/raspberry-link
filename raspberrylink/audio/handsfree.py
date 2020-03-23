@@ -21,18 +21,6 @@ class HandsfreeManager:
 
 	def __init__(self):
 		self.dbus_loop_thread = Thread(target=self._dbus_main_loop, daemon=True)
-
-		modems = self.manager.GetModems()
-		modem = modems[0][0]
-
-		print("Using modem %s" % modem)
-
-		vcmanager = dbus.Interface(self.bus.get_object('org.ofono', modem), 'org.ofono.VoiceCallManager')
-
-		vcmanager.connect_to_signal("CallAdded", self._call_added)
-
-		vcmanager.connect_to_signal("CallRemoved", self._call_removed)
-
 		self.dbus_loop_thread.start()
 
 	def answer_call(self, path):
@@ -64,5 +52,16 @@ class HandsfreeManager:
 		print("Call Removed: " + path)
 
 	def _dbus_main_loop(self):
+		modems = self.manager.GetModems()
+		modem = modems[0][0]
+
+		print("Using modem %s" % modem)
+
+		vcmanager = dbus.Interface(self.bus.get_object('org.ofono', modem), 'org.ofono.VoiceCallManager')
+
+		vcmanager.connect_to_signal("CallAdded", self._call_added)
+
+		vcmanager.connect_to_signal("CallRemoved", self._call_removed)
+
 		mainloop = GLib.MainLoop()
 		mainloop.run()

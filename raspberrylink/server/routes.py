@@ -46,11 +46,11 @@ def checkin():
         "load": 0,
         "audio": {
             "connected": False,
+            "signal_quality": 0,
             "name": "Unknown"
         },
         "call": {
             "active": False,
-            "signal_quality": 0,
             "path": ""
         }
     }
