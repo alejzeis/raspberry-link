@@ -8,19 +8,17 @@ import dbus
 import dbus.mainloop.glib
 
 from raspberrylink.server import config
-from raspberrylink.audio import handsfree
+from raspberrylink.audio import handsfree, routing
 
 
-class BTAudioManager:
+class AudioManager:
     handsfree_mgr = None
 
     sock = None
     recv_thread = None
 
     call_support = False
-    aplay_a2dp = None
-    aplay_sco = None
-    aplay_mic = None
+    router = None
 
     def __init__(self, call_support, socket_file="/run/raspberrylink_audio.socket"):
         self.call_support = call_support
@@ -29,10 +27,7 @@ class BTAudioManager:
         self.sock = socket(AF_UNIX, SOCK_STREAM)
         self.sock.bind(socket_file)
 
-        aplay_a2dp = Popen("bluealsa-aplay --pcm-buffer-time=1000000 00:00:00:00:00:00 --profile-a2dp",
-                           stdout=PIPE, stderr=PIPE)
-        if call_support:
-            aplay_sco = Popen("bluealsa-aplay 00:00:00:00:00:00 --profile-sco", stdout=PIPE, stderr=PIPE)
+        self.router = routing.PhysicalAudioRouter(self)
 
         self.recv_thread = Thread(target=self._recv_data, daemon=True)
         self.recv_thread.start()
@@ -47,10 +42,10 @@ class BTAudioManager:
                 data = con.recv(512).decode("UTF-8").split("~")
 
                 if data[0] == "CALL-ANSWER":
-                    # TODO Answer call
+                    self.handsfree_mgr.answer_call(data[1])
                     pass
                 elif data[0] == "CALL-HANGUP":
-                    # TODO Hangup Call
+                    self.handsfree_mgr.hangup_call(data[1])
                     pass
                 else:
                     print("Unknown data from server process")
@@ -75,7 +70,7 @@ def bootstrap():
     run("HANDSFREE=" + str(int(handsfree_support)) + " BLUETOOTH_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume
         + " raspilink-audio-start", shell=True)
 
-    BTAudioManager(handsfree_support)
+    AudioManager(handsfree_support)
 
     mainloop = GLib.MainLoop()
     mainloop.run()
