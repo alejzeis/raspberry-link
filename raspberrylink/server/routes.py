@@ -1,6 +1,6 @@
 from flask import jsonify, request
 from raspberrylink.server import app, software_name, software_version, server_config
-from raspberrylink.server import obdmanager, handsfree_manager
+from raspberrylink.server import obdmanager, audio_comm
 from raspberrylink.server import util
 
 api_version_major = 3
@@ -49,9 +49,7 @@ def checkin():
             "signal_quality": 0,
             "name": "Unknown"
         },
-        "call": {
-            "active": False,
-            "path": ""
+        "calls": {
         }
     }
 
@@ -64,10 +62,7 @@ def checkin():
         res_obj['audio']['connected'], res_obj['audio']['signal_quality'], res_obj['audio']['name'] = stats
 
     if audio_support and server_config['audio'].getboolean("handsfree-enabled"):
-        if handsfree_manager.current_call != "":
-            res_obj['call']['active'] = True
-            res_obj['call']['path'] = handsfree_manager.current_call
-
+        res_obj['calls'] = audio_comm.active_calls
 
     return res_obj
 
@@ -81,7 +76,7 @@ def answer_call():
     if path is None:
         return "Required argument \"path\" missing", 400
 
-    if handsfree_manager.answer_call(path):
+    if audio_comm.answer_call(path):
         return "", 204
     else:
         return "Failed to answer call", 500
@@ -96,7 +91,7 @@ def hangup_call():
     if path is None:
         return "Required argument \"path\" missing", 400
 
-    if handsfree_manager.hangup_call(path):
+    if audio_comm.hangup_call(path):
         return "", 204
     else:
         return "Failed to hangup call", 500

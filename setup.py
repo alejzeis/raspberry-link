@@ -16,7 +16,8 @@ setup(
   entry_points={
     'console_scripts': [
       'raspilink-server=raspberrylink.server:run_server',
-      'raspilink-agent=raspberrylink.agent:run_agent'
+      'raspilink-agent=raspberrylink.agent:run_agent',
+      'raspilink-audio=raspberrylink.audio.core:bootstrap'
     ]
   },
 )

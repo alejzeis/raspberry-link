@@ -26,6 +26,10 @@ enabled=yes
 ; This allows calls to be placed and recieved over the bluetooth connection
 ; NOTICE: BlueALSA MUST be compiled with the --enable-ofono option, and Ofono must be installed and running
 handsfree-enabled=no
+; Name of the Raspberry Pi that will show up when other devices discover and pair to the Pi
+bt-name=RaspberryLink
+; Percentage from 1-100 (include percent sign) to set the output volume of the Pi to.
+output-volume=75%
 
 [obd]
 ; Enable OBD (On-board diagnostics support)

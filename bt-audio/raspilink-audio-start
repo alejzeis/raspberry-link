@@ -2,30 +2,27 @@
 
 # Modified from https://github.com/balenalabs/balena-sound/blob/master/bluetooth-audio/start.sh
 
-echo "Starting Bluetooth-audio support"
-
-SYSTEM_VOLUME="${SYSTEM_VOLUME:-85}"
-BLUETOOTH_DEVICE_NAME="Raspberrylink"
-
+echo "- RaspberryLink Bluetooth Bootstrap Script"
 
 echo $SYSTEM_VOLUME > /run/raspberrylink_volume
 echo "Setting volume to %s%%\n" "$SYSTEM_VOLUME"
 
-amixer sset PCM,0 $SYSTEM_VOLUME% > /dev/null &
-amixer sset Digital,0 $SYSTEM_VOLUME% > /dev/null &
+amixer cset numid=1 $SYSTEM_VOLUME > /dev/null &
 
 # Set discoverable timeout
 dbus-send --system --dest=org.bluez --print-reply /org/bluez/hci0 org.freedesktop.DBus.Properties.Set string:'org.bluez.Adapter1' string:'DiscoverableTimeout' variant:uint32:0 > /dev/null
 
+# TODO: Determine if this is needed
 printf "Restarting bluetooth service\n"
 systemctl restart bluetooth > /dev/null
 sleep 2
 
 printf "discoverable on\npairable on\nexit\n" | bluetoothctl > /dev/null
-echo "Now discoverable and pairable"
+echo "- Now discoverable and pairable"
 
 # Start bluetooth and audio agent
-/usr/lib/raspberrylink-server/raspilink-bt-agent &
+/usr/lib/raspberrylink/raspilink-bt-agent &
+echo "- Started Python BlueZ Agent"
 
 sleep 2
 
@@ -35,19 +32,22 @@ rm -rf /var/run/bluealsa/
 
 # Start new bluealsa process (a2dp-sink to recieve media audio, hfp-ofono to recieve call and SMS information via ofono)
 # Check if handsfree support for calls is enabled, then we need hfp-ofono profile enabled, otherwise we don't
-if raspilink-check-handsfree; then
+if [ $HANDSFREE -eq 1 ]; then
   /usr/bin/bluealsa -i hci0 -p a2dp-sink -p hfp-ofono &
+  echo "- Started bluealsa process with a2dp-sink and hfp-ofono profiles."
 else
   /usr/bin/bluealsa -i hci0 -p a2dp-sink &
+  echo "- Started bluealsa process with a2dp-sink profile."
 fi
 
 # Put bluetooth interface online
 hciconfig hci0 up
 hciconfig hci0 name "$BLUETOOTH_DEVICE_NAME"
+echo "- Bluetooth interface hci0 online"
 
 # Enable simple pairing (no pin code)
 hciconfig hci0 sspmode 1  # Secure Simple Pairing
-printf "Starting bluetooth agent in Secure Simple Pairing Mode (SSPM) - No PIN code provided or invalid\n"
+echo "- Enabled SSP (Secure Simple Pairing)"
 
 # Reconnect if there is a known device
 sleep 2
@@ -55,9 +55,9 @@ if [ -f "/var/cache/bluetooth/reconnect_device" ]; then
   TRUSTED_MAC_ADDRESS=$(cat /var/cache/bluetooth/reconnect_device)
   printf "Attempting to reconnect to previous bluetooth device: %s\n" "$TRUSTED_MAC_ADDRESS"
   printf "connect %s\nexit\n" "$TRUSTED_MAC_ADDRESS" | bluetoothctl > /dev/null
+  sleep 2
 fi
 
-sleep 2
-printf "Device is discoverable as \"%s\"\n" "$BLUETOOTH_DEVICE_NAME"
+printf "- Device is discoverable as \"%s\"\n" "$BLUETOOTH_DEVICE_NAME"
 exec /usr/bin/bluealsa-aplay --pcm-buffer-time=1000000 00:00:00:00:00:00 --profile-a2dp
 # TODO 2nd instance of aplay/arecord with SCO for phone calls
