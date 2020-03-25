@@ -38,7 +38,7 @@ enabled=no
 
 
 def load_config():
-    config_file = getenv("RASPBERRYLINK_CONFIG")
+    config_file = getenv("RASPILINK_CONFIG")
     if config_file is None:
         config_file = "/etc/raspberrylink-server.conf"
 

@@ -9,7 +9,11 @@ class HandsfreeManager:
 	# TODO: Support for multiple active calls?
 	current_call = ""
 
-	def __init__(self):
+	bt_mgr = None
+
+	def __init__(self, bt_mgr):
+		self.bt_mgr = bt_mgr
+
 		modems = self.manager.GetModems()
 		modem = modems[0][0]
 

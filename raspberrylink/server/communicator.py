@@ -10,11 +10,14 @@ class AudioServiceCommunicator:
 
     def __init__(self, socket_file="/run/raspberrylink_audio.socket"):
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sock.connect(socket_file)
-        print("Connected to RaspberryLink Audio socket")
+        try:
+            self.sock.connect(socket_file)
+            print("Connected to RaspberryLink Audio socket")
 
-        self.recv_thread = threading.Thread(target=self._process_recv, daemon=True)
-        self.recv_thread.start()
+            self.recv_thread = threading.Thread(target=self._process_recv, daemon=True)
+            self.recv_thread.start()
+        except FileNotFoundError:
+            raise RuntimeError("Failed to connect to RaspberryLink Audio Socket (perhaps the service isn't running?)")
 
     def answer_call(self, path):
         self.sock.send(("CALL-ANSWER~" + path).encode("UTF-8"))
