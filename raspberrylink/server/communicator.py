@@ -12,7 +12,7 @@ class AudioServiceCommunicator:
     active_calls = {}
 
     def __init__(self, socket_file="/run/raspberrylink_audio.socket"):
-        self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(logging.DEBUG)
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         try:
             self.sock.connect(socket_file)
@@ -36,6 +36,7 @@ class AudioServiceCommunicator:
 
             if data[0] == "CALL-STATE":
                 # Call state change, new incoming call, new outgoing call, or hung up TODO
+                self.logger.debug("Call State Data: " + str(data))
                 pass
             else:
                 self.logger.debug("Unknown message from RaspberryLink Audio process " + str(data))

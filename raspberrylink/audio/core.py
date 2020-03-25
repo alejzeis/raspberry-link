@@ -15,6 +15,7 @@ class AudioManager:
     handsfree_mgr = None
 
     sock = None
+    active_connection = None
     recv_thread = None
 
     call_support = False
@@ -28,6 +29,7 @@ class AudioManager:
         self.sock.bind(socket_file)
 
         self.router = routing.PhysicalAudioRouter(self)
+        self.router.on_start_media_playback()  # Immediately begin playing any A2DP data
 
         self.recv_thread = Thread(target=self._recv_data, daemon=True)
         self.recv_thread.start()
@@ -36,10 +38,10 @@ class AudioManager:
         self.sock.listen(1)
 
         while True:
-            con, addr = self.sock.accept()
+            self.active_connection, addr = self.sock.accept()
 
             while True:
-                data = con.recv(512).decode("UTF-8").split("~")
+                data = self.active_connection.recv(512).decode("UTF-8").split("~")
 
                 if data[0] == "CALL-ANSWER":
                     self.handsfree_mgr.answer_call(data[1])
