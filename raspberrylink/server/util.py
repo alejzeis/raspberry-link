@@ -1,4 +1,5 @@
 from subprocess import run, PIPE
+from raspberrylink.server import logger
 
 
 def check_audio_running():
@@ -10,7 +11,7 @@ def check_audio_running():
 def get_current_audio_info():
     con_cmd = run("hcitool con", stdout=PIPE, stderr=PIPE, shell=True)
     if con_cmd.returncode != 0:
-        print("Non-zero return code from \"hcitool con\"")
+        logger.error("Non-zero return code from \"hcitool con\"")
         return False, 0, "Error obtaining Information"
 
     output = con_cmd.stdout.decode("UTF-8")
@@ -20,14 +21,14 @@ def get_current_audio_info():
         bluetooth_id = output.split("\n")[1].split("ACL")[1].split("handle")[0].strip()
         lq_cmd = run("hcitool lq " + bluetooth_id, stdout=PIPE, stderr=PIPE, shell=True)
         if lq_cmd.returncode != 0:
-            print("Non-zero return code from \"hcitool lq\"")
+            logger.error("Non-zero return code from \"hcitool lq\"")
             return False, 0, "Error obtaining Information"
 
         lq = int(lq_cmd.stdout.decode("UTF-8").split(" ")[2].strip())
         info_cmd = run("hcitool info " + bluetooth_id + " | grep \"Device Name\"", stdout=PIPE, stderr=PIPE, shell=True)
 
         if info_cmd.returncode != 0:
-            print("Non-zero return code from \"hcitool info\"")
+            logger.error("Non-zero return code from \"hcitool info\"")
             return True, lq, "Error obtaining Information"
 
         bluetooth_name = info_cmd.stdout.decode("UTF-8").split(" ")[2]

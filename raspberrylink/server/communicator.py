@@ -1,18 +1,22 @@
 import socket
 import threading
+import logging
 
 
 class AudioServiceCommunicator:
     sock = None
     recv_thread = None
 
+    logger = logging.getLogger("AudioServiceCommunicator")
+
     active_calls = {}
 
     def __init__(self, socket_file="/run/raspberrylink_audio.socket"):
+        self.logger.setLevel(logging.INFO)
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         try:
             self.sock.connect(socket_file)
-            print("Connected to RaspberryLink Audio socket")
+            self.logger.debug("Connected to RaspberryLink Audio socket")
 
             self.recv_thread = threading.Thread(target=self._process_recv, daemon=True)
             self.recv_thread.start()
@@ -26,7 +30,7 @@ class AudioServiceCommunicator:
         self.sock.send(("CALL-HANGUP~" + path).encode("UTF-8"))
 
     def _process_recv(self):
-        print("Listening for data from RaspberryLink Audio process")
+        self.logger.debug("Listening for data from RaspberryLink Audio process")
         while True:
             data = self.sock.recv(512).decode("UTF-8").split("~")
 
@@ -34,4 +38,4 @@ class AudioServiceCommunicator:
                 # Call state change, new incoming call, new outgoing call, or hung up TODO
                 pass
             else:
-                print("Unknown message from RaspberryLink Audio process " + str(data))
+                self.logger.debug("Unknown message from RaspberryLink Audio process " + str(data))
