@@ -1,10 +1,21 @@
 # raspberry-link
 "Smart car" server solution for a raspberry pi, handles bluetooth audio and OBD information
 
+For installation information visit the [wiki](https://github.com/jython234/raspberry-link/wiki/Installation)
+
+### Dependencies
+For all features:
+```
+gstreamer1.0 gstreamer1.0-rtsp gstreamer1.0-plugins-bad
+python3 python3-pip libcairo2-dev libgirepository1.0-dev
+```
+
 ### Features
+Any of these can be disabled/enabled
+
 - Bluetooth Audio Support (Add handsfree support to an old car with only an AUX IN port)
   - A2DP profile audio
-  - HFP (Hands-free-profile) support, recieve and make calls over the car speakers using Ofono (USB microphone required)
+  - HFP (Hands-free-profile) support, recieve and make calls over the car speakers using Ofono (microphone required)
 - Rear-view Camera
   - Connect a camera locally or to another device on a network and stream to the user interface
 - OBD (On board diagnostics)
