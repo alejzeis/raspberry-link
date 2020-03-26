@@ -37,7 +37,8 @@ class HandsfreeManager:
 
         self.modems = self.manager.GetModems()
 
-        self.logger.info("Detected Modems: " + str(self.modems.keys()))
+        for modem, props in self.modems:
+            self.logger.info("Detected Modem: " + str(modem))
 
         self.poll_thread = threading.Thread(target=self._poll_for_calls, daemon=True)
         self.poll_thread.start()
