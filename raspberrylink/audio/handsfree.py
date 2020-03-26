@@ -40,7 +40,7 @@ class HandsfreeManager:
         self.modems = self.manager.GetModems()
 
         for modem, props in self.modems:
-            self.logger.info("Detected Modem: " + str(modem))
+            self.logger.info("Auto-detected Previous Modem: " + str(modem))
 
         self.poll_thread = threading.Thread(target=self._poll_for_calls, daemon=True)
         self.poll_thread.start()
@@ -73,12 +73,13 @@ class HandsfreeManager:
                             self.bt_mgr.router.on_start_call()
                     else:
                         self.active_calls -= 1
-                        if self.active_calls < 1:
-                            self.bt_mgr.router.on_end_call()
 
                     if self.bt_mgr.active_connection is not None:
                         self.bt_mgr.active_connection.send("CALL-STATE~" + modem + "~" + state + "~"
                                                            + name + "~" + line_ident + "~" + incoming_line)
+
+            if self.active_calls < 1:
+                self.bt_mgr.router.on_end_call()
 
             sleep(1)
 
