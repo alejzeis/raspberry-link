@@ -30,8 +30,8 @@ class PhysicalAudioRouter(AudioRouter):
 
     def on_start_media_playback(self):
         if self.aplay_a2dp is None:
-            aplay_a2dp = Popen("bluealsa-aplay --pcm-buffer-time=1000000 00:00:00:00:00:00 --profile-a2dp",
-                               stdout=PIPE, stderr=PIPE)
+            self.aplay_a2dp = Popen("bluealsa-aplay --pcm-buffer-time=1000000 00:00:00:00:00:00 --profile-a2dp",
+                               stdout=PIPE, stderr=PIPE, shell=True)
 
     def on_stop_media_playback(self):
         if self.aplay_a2dp is not None:
@@ -40,7 +40,7 @@ class PhysicalAudioRouter(AudioRouter):
 
     def on_start_call(self):
         if self.aplay_sco is None:
-            self.aplay_sco = Popen("bluealsa-aplay 00:00:00:00:00:00 --profile-sco", stdout=PIPE, stderr=PIPE)
+            self.aplay_sco = Popen("bluealsa-aplay 00:00:00:00:00:00 --profile-sco", stdout=PIPE, stderr=PIPE, shell=True)
 
         if self.aplay_mic is None:
             # TODO: Begin microphone process
