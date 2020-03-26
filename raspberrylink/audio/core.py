@@ -1,4 +1,4 @@
-from subprocess import run, Popen, PIPE
+from subprocess import run
 from threading import Thread
 from socket import socket, AF_UNIX, SOCK_STREAM
 from sys import exit
@@ -7,7 +7,7 @@ from gi.repository import GLib
 import dbus
 import dbus.mainloop.glib
 
-from raspberrylink.server import config
+from raspberrylink import config
 from raspberrylink.audio import handsfree, routing
 
 
@@ -59,7 +59,7 @@ def bootstrap():
 
     print("Starting RaspberryLink Bluetooth Audio Service")
 
-    conf = config.load_config()
+    conf = config.load_server_config()
     if not conf['audio'].getboolean("enabled"):
         print("Audio support not enabled in RaspberryLink Server config. Exiting")
         exit(1)

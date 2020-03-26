@@ -1,23 +1,10 @@
-from os import getenv
-from os.path import exists
+from raspberrylink.config import load_agent_config
 import socket
-import configparser
 import subprocess
 import logging
 import atexit
 
 
-default_config = """
-[agent]
-; Interface for the WSGI HTTP server to bind on
-interface=0.0.0.0
-; Port for the Agent to listen for commands on
-port=9099
-
-; Type of camera this agent has:
-; Must be either, rear, front, side, other
-type=rear
-"""
 gstreamer_command = ['gst-launch-1.0', '-e', 'v4l2src', 'do-timestamp=true', '!',
                      'video/x-h264,width=640,height=480,framerate=30/1', '!',
                      'h264parse', '!', 'rtph264pay', 'config-interval=1', '!',
@@ -26,28 +13,12 @@ gstreamer_command = ['gst-launch-1.0', '-e', 'v4l2src', 'do-timestamp=true', '!'
 logger = logging.getLogger("RL-Agent")
 logger.setLevel(logging.INFO)
 
-
-def load_config():
-    config_location = getenv("RASPILINK_AGENT_CONFIG", "/etc/raspberrylink-agent.conf")
-    logger.info("Loading configuration from " + config_location)
-
-    if not exists(config_location):
-        logger.warning("Configuration not found, writing and loading default...")
-        f = open(config_location, 'w')
-        f.writelines(default_config)
-        f.close()
-
-    config = configparser.ConfigParser()
-    config.read(config_location)
-    return config
-
-
 stream_process = None
 
 
 def run_agent():
     logger.info("Starting Raspberrylink Agent...")
-    config = load_config()
+    config = load_agent_config()
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((config['agent']['interface'], int(config['agent']['port'])))
