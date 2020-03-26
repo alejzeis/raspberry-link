@@ -27,6 +27,8 @@ class HandsfreeManager:
 
     logger = logging.getLogger("RL-HandsfreeManager")
 
+    active_calls = 0
+
     def __init__(self, bt_mgr):
         self.bt_mgr = bt_mgr
 
@@ -64,6 +66,15 @@ class HandsfreeManager:
                     line_ident = properties['LineIdentification']
                     if state == "incoming":
                         incoming_line = properties['IncomingLine']
+
+                    if state != "disconnected":
+                        self.active_calls += 1
+                        if self.active_calls == 1:
+                            self.bt_mgr.router.on_start_call()
+                    else:
+                        self.active_calls -= 1
+                        if self.active_calls < 1:
+                            self.bt_mgr.router.on_end_call()
 
                     if self.bt_mgr.active_connection is not None:
                         self.bt_mgr.active_connection.send("CALL-STATE~" + modem + "~" + state + "~"

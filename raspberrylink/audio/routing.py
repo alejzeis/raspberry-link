@@ -38,6 +38,8 @@ class PhysicalAudioRouter(AudioRouter):
             self.aplay_a2dp.terminate()
             self.aplay_a2dp.wait()
 
+            self.aplay_a2dp = None
+
     def on_start_call(self):
         if self.aplay_sco is None:
             self.aplay_sco = Popen("bluealsa-aplay 00:00:00:00:00:00 --profile-sco", stdout=PIPE, stderr=PIPE, shell=True)
@@ -51,6 +53,10 @@ class PhysicalAudioRouter(AudioRouter):
             self.aplay_mic.terminate()
             self.aplay_mic.wait()
 
+            self.aplay_mic = None
+
         if self.aplay_sco is not None:
             self.aplay_sco.terminate()
             self.aplay_sco.wait()
+
+            self.aplay_sco = None
