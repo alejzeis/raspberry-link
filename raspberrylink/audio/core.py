@@ -3,12 +3,19 @@ from threading import Thread
 from socket import socket, AF_UNIX, SOCK_STREAM
 from sys import exit
 
+import atexit
+import logging
+
 from gi.repository import GLib
 import dbus
 import dbus.mainloop.glib
 
 from raspberrylink import config
 from raspberrylink.audio import handsfree, routing
+
+
+logger = logging.getLogger("RL-Audio")
+logger.setLevel(logging.INFO)
 
 
 class AudioManager:
@@ -23,7 +30,10 @@ class AudioManager:
 
     def __init__(self, call_support, socket_file="/run/raspberrylink_audio.socket"):
         self.call_support = call_support
-        self.handsfree_mgr = handsfree.HandsfreeManager(self)
+        if self.call_support:
+            self.handsfree_mgr = handsfree.HandsfreeManager(self)
+        else:
+            self.handsfree_mgr = handsfree.DummyHandsfreeManager()
 
         self.sock = socket(AF_UNIX, SOCK_STREAM)
         self.sock.bind(socket_file)
@@ -57,18 +67,18 @@ class AudioManager:
 def bootstrap():
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
-    print("Starting RaspberryLink Bluetooth Audio Service")
+    logger.info("Starting RaspberryLink Bluetooth Audio Service")
 
     conf = config.load_server_config()
     if not conf['audio'].getboolean("enabled"):
-        print("Audio support not enabled in RaspberryLink Server config. Exiting")
+        logger.error("Audio support not enabled in RaspberryLink Server config. Exiting")
         exit(1)
 
     handsfree_support = conf['audio'].getboolean("handsfree-enabled")
     name = conf['audio']['bt-name']
     volume = conf['audio']['output-volume'] + "%"
 
-    print("Running bootstrap script")
+    logger.info("Running bootstrap script")
     run("HANDSFREE=" + str(int(handsfree_support)) + " BLUETOOTH_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume
         + " raspilink-audio-start", shell=True)
 

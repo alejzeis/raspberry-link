@@ -5,6 +5,17 @@ import threading
 import logging
 
 
+class DummyHandsfreeManager:
+    def __init__(self):
+        pass
+
+    def answer_call(self, path):
+        raise NotImplementedError("Handsfree Support not enabled.")
+
+    def hangup_call(self, path):
+        raise NotImplementedError("Handsfree Support not enabled.")
+
+
 class HandsfreeManager:
     bus = None
     manager = None
