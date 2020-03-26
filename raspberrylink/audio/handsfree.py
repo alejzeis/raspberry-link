@@ -51,6 +51,7 @@ class HandsfreeManager:
         while True:
             self.modems = self.manager.GetModems()  # Update list in case of new modems from newly-paired devices
 
+            call_count = 0
             for modem, modem_props in self.modems:
                 if "org.ofono.VoiceCallManager" not in modem_props["Interfaces"]:
                     continue
@@ -68,19 +69,20 @@ class HandsfreeManager:
                         incoming_line = properties['IncomingLine']
 
                     if state != "disconnected":
-                        self.active_calls += 1
-                        if self.active_calls == 1:
-                            self.bt_mgr.router.on_start_call()
+                        call_count += 1
                     else:
-                        self.active_calls -= 1
+                        call_count -= 1
 
                     if self.bt_mgr.active_connection is not None:
                         self.bt_mgr.active_connection.send("CALL-STATE~" + modem + "~" + state + "~"
                                                            + name + "~" + line_ident + "~" + incoming_line)
 
-            if self.active_calls < 1:
+            if call_count < 1:
                 self.bt_mgr.router.on_end_call()
+            elif self.active_calls < 1 <= call_count:
+                self.bt_mgr.router.on_start_call()
 
+            self.active_calls = call_count
             sleep(1)
 
     def answer_call(self, path):
