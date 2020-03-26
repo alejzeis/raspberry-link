@@ -10,10 +10,10 @@ class DummyHandsfreeManager:
         pass
 
     def answer_call(self, path):
-        raise NotImplementedError("Handsfree Support not enabled.")
+        pass
 
     def hangup_call(self, path):
-        raise NotImplementedError("Handsfree Support not enabled.")
+        pass
 
 
 class HandsfreeManager:
@@ -39,7 +39,7 @@ class HandsfreeManager:
 
         self.logger.info("Detected Modems: " + str(self.modems.keys()))
 
-        self.poll_thread = threading.Thread(target=self._poll_for_calls(), daemon=True)
+        self.poll_thread = threading.Thread(target=self._poll_for_calls, daemon=True)
         self.poll_thread.start()
 
     def _poll_for_calls(self):
