@@ -66,7 +66,7 @@ def bootstrap():
 
     handsfree_support = conf['audio'].getboolean("handsfree-enabled")
     name = conf['audio']['bt-name']
-    volume = conf['audio']['output-volume']
+    volume = conf['audio']['output-volume'] + "%"
 
     print("Running bootstrap script")
     run("HANDSFREE=" + str(int(handsfree_support)) + " BLUETOOTH_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume

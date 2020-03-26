@@ -28,8 +28,8 @@ enabled=yes
 handsfree-enabled=no
 ; Name of the Raspberry Pi that will show up when other devices discover and pair to the Pi
 bt-name=RaspberryLink
-; Percentage from 1-100 (include percent sign) to set the output volume of the Pi to.
-output-volume=75%
+; Percentage from 1-100 (don't include percent sign) to set the output volume of the Pi to.
+output-volume=75
 
 [obd]
 ; Enable OBD (On-board diagnostics support)
