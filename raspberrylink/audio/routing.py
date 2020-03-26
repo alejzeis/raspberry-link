@@ -38,8 +38,8 @@ class PhysicalAudioRouter(AudioRouter):
 
     def on_start_media_playback(self):
         if self.aplay_a2dp is None:
-            self.aplay_a2dp = Popen(self.bluealsa_aplay_exec +
-                                    " --pcm-buffer-time=1000000 00:00:00:00:00:00 --profile-a2dp",
+            self.aplay_a2dp = Popen([self.bluealsa_aplay_exec,
+                                    "--pcm-buffer-time=1000000", "00:00:00:00:00:00", "--profile-a2dp"],
                                     stdout=PIPE, stderr=PIPE, shell=False)
 
     def on_stop_media_playback(self):
@@ -51,7 +51,7 @@ class PhysicalAudioRouter(AudioRouter):
 
     def on_start_call(self):
         if self.aplay_sco is None:
-            self.aplay_sco = Popen(self.bluealsa_aplay_exec + " 00:00:00:00:00:00 --profile-sco",
+            self.aplay_sco = Popen([self.bluealsa_aplay_exec, "00:00:00:00:00:00", "--profile-sco"],
                                    stdout=PIPE, stderr=PIPE, shell=False)
 
         if self.aplay_mic is None:
