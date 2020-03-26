@@ -25,13 +25,22 @@ class PhysicalAudioRouter(AudioRouter):
     aplay_sco = None
     aplay_mic = None
 
+    bluealsa_aplay_exec = None
+    aplay_exec = None
+    arecord_exec = None
+
     def __init__(self, audio_manager):
         super().__init__(audio_manager)
 
+        self.bluealsa_aplay_exec = audio_manager.config['audio']['bluealsa-aplay-exec']
+        self.aplay_exec = audio_manager.config['audio']['aplay-exec']
+        self.arecord_exec = audio_manager.config['audio']['arecord-exec']
+
     def on_start_media_playback(self):
         if self.aplay_a2dp is None:
-            self.aplay_a2dp = Popen("bluealsa-aplay --pcm-buffer-time=1000000 00:00:00:00:00:00 --profile-a2dp",
-                               stdout=PIPE, stderr=PIPE, shell=True)
+            self.aplay_a2dp = Popen(self.bluealsa_aplay_exec +
+                                    " --pcm-buffer-time=1000000 00:00:00:00:00:00 --profile-a2dp",
+                                    stdout=PIPE, stderr=PIPE, shell=False)
 
     def on_stop_media_playback(self):
         if self.aplay_a2dp is not None:
@@ -42,7 +51,8 @@ class PhysicalAudioRouter(AudioRouter):
 
     def on_start_call(self):
         if self.aplay_sco is None:
-            self.aplay_sco = Popen("bluealsa-aplay 00:00:00:00:00:00 --profile-sco", stdout=PIPE, stderr=PIPE, shell=True)
+            self.aplay_sco = Popen(self.bluealsa_aplay_exec + " 00:00:00:00:00:00 --profile-sco",
+                                   stdout=PIPE, stderr=PIPE, shell=False)
 
         if self.aplay_mic is None:
             # TODO: Begin microphone process

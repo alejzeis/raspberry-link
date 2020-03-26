@@ -31,6 +31,14 @@ bt-name=RaspberryLink
 ; Percentage from 1-100 (don't include percent sign) to set the output volume of the Pi to.
 output-volume=75
 
+; Location of bluealsa-aplay executable to play audio
+bluealsa-aplay-exec=/usr/bin/bluealsa-aplay
+; Location of the aplay (ALSA) executable
+aplay-exec=/usr/bin/aplay
+; Location of the arecord (ALSA) executable
+arecord-exec=/usr/bin/arecord
+
+
 [obd]
 ; Enable OBD (On-board diagnostics support)
 enabled=no

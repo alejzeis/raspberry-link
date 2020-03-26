@@ -27,9 +27,11 @@ class AudioManager:
 
     call_support = False
     router = None
+    config = None
 
-    def __init__(self, call_support, socket_file="/run/raspberrylink_audio.socket"):
-        self.call_support = call_support
+    def __init__(self, conf, socket_file="/run/raspberrylink_audio.socket"):
+        self.config = conf
+        self.call_support = conf['audio'].getboolean("handsfree-enabled")
         if self.call_support:
             self.handsfree_mgr = handsfree.HandsfreeManager(self)
         else:
@@ -93,7 +95,7 @@ def bootstrap():
     run("HANDSFREE=" + str(int(handsfree_support)) + " BLUETOOTH_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume
         + " raspilink-audio-start", shell=True)
 
-    AudioManager(handsfree_support)
+    AudioManager(conf)
 
     mainloop = GLib.MainLoop()
     mainloop.run()
