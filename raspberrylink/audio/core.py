@@ -41,8 +41,19 @@ class AudioManager:
         self.router = routing.PhysicalAudioRouter(self)
         self.router.on_start_media_playback()  # Immediately begin playing any A2DP data
 
+        atexit.register(self._exit_handler)
+
         self.recv_thread = Thread(target=self._recv_data, daemon=True)
         self.recv_thread.start()
+
+    def _exit_handler(self):
+        if self.active_connection is not None:
+            self.active_connection.close()
+
+        self.sock.close()
+
+        self.router.on_stop_media_playback()
+        self.router.on_end_call()
 
     def _recv_data(self):
         self.sock.listen(1)
