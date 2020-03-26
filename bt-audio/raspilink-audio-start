@@ -5,7 +5,7 @@
 echo "- RaspberryLink Bluetooth Bootstrap Script"
 
 echo $SYSTEM_VOLUME > /run/raspberrylink_volume
-echo "Setting volume to %s%%\n" "$SYSTEM_VOLUME"
+echo "- Setting volume to " "$SYSTEM_VOLUME"
 
 amixer cset numid=1 $SYSTEM_VOLUME > /dev/null &
 
@@ -13,7 +13,7 @@ amixer cset numid=1 $SYSTEM_VOLUME > /dev/null &
 dbus-send --system --dest=org.bluez --print-reply /org/bluez/hci0 org.freedesktop.DBus.Properties.Set string:'org.bluez.Adapter1' string:'DiscoverableTimeout' variant:uint32:0 > /dev/null
 
 # TODO: Determine if this is needed
-printf "Restarting bluetooth service\n"
+echo "- Restarting bluetooth service"
 systemctl restart bluetooth > /dev/null
 sleep 2
 
@@ -58,4 +58,4 @@ if [ -f "/var/cache/bluetooth/reconnect_device" ]; then
   sleep 2
 fi
 
-printf "- Device is discoverable as \"%s\"\n" "$BLUETOOTH_DEVICE_NAME"
+echo "- Bootstrap complete."
