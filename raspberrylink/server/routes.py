@@ -1,7 +1,7 @@
 from flask import jsonify, request
 from raspberrylink.server import app, software_name, software_version, server_config
-from raspberrylink.server import obdmanager, audio_comm
-from raspberrylink.server import util
+from raspberrylink.server import audio_comm
+from raspberrylink import util
 
 api_version_major = 3
 api_version_minor = 1

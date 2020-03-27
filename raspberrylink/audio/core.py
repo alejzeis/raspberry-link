@@ -2,6 +2,7 @@ from subprocess import run
 from threading import Thread
 from socket import socket, AF_UNIX, SOCK_STREAM
 from sys import exit
+from time import sleep
 
 import atexit
 import logging
@@ -10,7 +11,7 @@ from gi.repository import GLib
 import dbus
 import dbus.mainloop.glib
 
-from raspberrylink import config
+from raspberrylink import config, util
 from raspberrylink.audio import handsfree, routing
 
 
@@ -41,12 +42,14 @@ class AudioManager:
         self.sock.bind(socket_file)
 
         self.router = routing.PhysicalAudioRouter(self)
-        self.router.on_start_media_playback()  # Immediately begin playing any A2DP data
+        # self.router.on_start_media_playback()  # Immediately begin playing any A2DP data
 
         atexit.register(self._exit_handler)
 
         self.recv_thread = Thread(target=self._recv_data, daemon=True)
         self.recv_thread.start()
+
+        Thread(target=self._poll_connections, daemon=True).start()
 
     def _exit_handler(self):
         if self.active_connection is not None:
@@ -56,6 +59,19 @@ class AudioManager:
 
         self.router.on_stop_media_playback()
         self.router.on_end_call()
+
+    def _poll_connections(self):
+        device = False
+        while True:
+            # Check if a device has connected recently, and then start media playback or end it
+            new_status = util.check_device_connected()
+            if not device and new_status:
+                self.router.on_start_media_playback()
+            elif device and not new_status:
+                self.router.on_stop_media_playback()
+
+            device = new_status
+            sleep(1)
 
     def _recv_data(self):
         self.sock.listen(1)
