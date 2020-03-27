@@ -64,7 +64,7 @@ def checkin():
     if audio_support and server_config['audio'].getboolean("handsfree-enabled"):
         res_obj['calls'] = audio_comm.active_calls
 
-    return res_obj
+    return jsonify(res_obj)
 
 
 @app.route('/calls/answer')

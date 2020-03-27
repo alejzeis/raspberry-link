@@ -72,8 +72,6 @@ class AudioManager:
                 elif data[0] == "CALL-HANGUP":
                     self.handsfree_mgr.hangup_call(data[1])
                     pass
-                else:
-                    print("Unknown data from server process")
 
 
 # Entry function for raspilink-audio
