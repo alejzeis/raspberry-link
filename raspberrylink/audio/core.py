@@ -70,7 +70,7 @@ class AudioManager:
             if self.call_support:
                 self.handsfree_mgr.poll()
 
-            sleep(1)
+            sleep(0.5)
 
     def _poll_connections(self):
         # Check if a device has connected recently, and then start media playback or end it

@@ -78,7 +78,6 @@ class HandsfreeManager(DummyHandsfreeManager):
             self.bt_mgr.router.on_start_call()
 
         self.active_calls = call_count
-        sleep(1)
 
     def answer_call(self, path):
         call = dbus.Interface(self.bus.get_object('org.ofono', path), 'org.ofono.VoiceCall')
