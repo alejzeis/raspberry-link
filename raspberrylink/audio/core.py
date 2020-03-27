@@ -25,10 +25,13 @@ class AudioManager:
     sock = None
     active_connection = None
     recv_thread = None
+    poll_thread = None
 
     call_support = False
     router = None
     config = None
+
+    device_connected = False
 
     def __init__(self, conf, socket_file="/run/raspberrylink_audio.socket"):
         self.config = conf
@@ -42,14 +45,14 @@ class AudioManager:
         self.sock.bind(socket_file)
 
         self.router = routing.PhysicalAudioRouter(self)
-        # self.router.on_start_media_playback()  # Immediately begin playing any A2DP data
 
         atexit.register(self._exit_handler)
 
         self.recv_thread = Thread(target=self._recv_data, daemon=True)
         self.recv_thread.start()
 
-        Thread(target=self._poll_connections, daemon=True).start()
+        self.poll_thread = Thread(target=self._poll, daemon=True)
+        self.poll_thread.start()
 
     def _exit_handler(self):
         if self.active_connection is not None:
@@ -60,32 +63,46 @@ class AudioManager:
         self.router.on_stop_media_playback()
         self.router.on_end_call()
 
-    def _poll_connections(self):
-        device = False
+    def _poll(self):
+        logger.info("Starting Polling Thread")
         while True:
-            # Check if a device has connected recently, and then start media playback or end it
-            new_status = util.check_device_connected()
-            if not device and new_status:
-                self.router.on_start_media_playback()
-            elif device and not new_status:
-                self.router.on_stop_media_playback()
+            self._poll_connections()
+            if self.call_support:
+                self.handsfree_mgr.poll()
 
-            device = new_status
             sleep(1)
 
+    def _poll_connections(self):
+        # Check if a device has connected recently, and then start media playback or end it
+        new_status = util.check_device_connected()
+        if not self.device_connected and new_status:
+            self.router.on_start_media_playback()
+        elif self.device_connected and not new_status:
+            self.router.on_stop_media_playback()
+
+        self.device_connected = new_status
+
     def _recv_data(self):
+        logger.info("Started Socket Receive thread")
         self.sock.listen(1)
 
         while True:
             self.active_connection, addr = self.sock.accept()
+            logger.debug("Accepted socket connection")
 
             while True:
+                # Check if the connection was closed
+                if self.active_connection.fileno() == -1:
+                    break
+
                 data = self.active_connection.recv(512).decode("UTF-8").split("~")
 
                 if data[0] == "CALL-ANSWER":
+                    # Answer the specified call
                     self.handsfree_mgr.answer_call(data[1])
                     pass
                 elif data[0] == "CALL-HANGUP":
+                    # Hangup the specified call
                     self.handsfree_mgr.hangup_call(data[1])
                     pass
 

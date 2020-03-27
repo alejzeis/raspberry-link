@@ -33,7 +33,8 @@ rm -rf /var/run/bluealsa/
 # Start new bluealsa process (a2dp-sink to recieve media audio, hfp-ofono to recieve call and SMS information via ofono)
 # Check if handsfree support for calls is enabled, then we need hfp-ofono profile enabled, otherwise we don't
 if [ $HANDSFREE -eq 1 ]; then
-  /usr/bin/bluealsa -i hci0 -p a2dp-sink -p hfp-ofono &
+  # Append LD_LIBRARY_PATH so bluealsa can find fdk-aac library (since it all had to be compiled and installed from source)
+  LD_LIBRARY_PATH=/usr/local/lib /usr/bin/bluealsa -i hci0 -p a2dp-sink -p hfp-ofono &
   echo "- Started bluealsa process with a2dp-sink and hfp-ofono profiles."
 else
   /usr/bin/bluealsa -i hci0 -p a2dp-sink &
@@ -44,6 +45,7 @@ fi
 hciconfig hci0 up
 hciconfig hci0 name "$BLUETOOTH_DEVICE_NAME"
 echo "- Bluetooth interface hci0 online"
+echo "- Device Name is: " "$BLUETOOTH_DEVICE_NAME"
 
 # Enable simple pairing (no pin code)
 hciconfig hci0 sspmode 1  # Secure Simple Pairing
@@ -53,9 +55,9 @@ echo "- Enabled SSP (Secure Simple Pairing)"
 sleep 2
 if [ -f "/var/cache/bluetooth/reconnect_device" ]; then
   TRUSTED_MAC_ADDRESS=$(cat /var/cache/bluetooth/reconnect_device)
-  printf "Attempting to reconnect to previous bluetooth device: %s\n" "$TRUSTED_MAC_ADDRESS"
+  echo "- Attempting to reconnect to previous bluetooth device: " "$TRUSTED_MAC_ADDRESS"
   printf "connect %s\nexit\n" "$TRUSTED_MAC_ADDRESS" | bluetoothctl > /dev/null
   sleep 2
 fi
 
-echo "- Bootstrap complete."
+echo "- Bootstrap script complete."

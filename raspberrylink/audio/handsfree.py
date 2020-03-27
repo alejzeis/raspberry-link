@@ -1,7 +1,6 @@
 from time import sleep
 import dbus
 import dbus.mainloop.glib
-import threading
 import logging
 
 
@@ -15,21 +14,23 @@ class DummyHandsfreeManager:
     def hangup_call(self, path):
         pass
 
+    def poll(self):
+        pass
 
-class HandsfreeManager:
+
+class HandsfreeManager(DummyHandsfreeManager):
     bus = None
     manager = None
     modems = None
 
     bt_mgr = None
 
-    poll_thread = None
-
     logger = logging.getLogger("RL-HandsfreeManager")
 
     active_calls = 0
 
     def __init__(self, bt_mgr):
+        super().__init__()
         self.bt_mgr = bt_mgr
 
         self.logger.setLevel(logging.INFO)
@@ -42,48 +43,42 @@ class HandsfreeManager:
         for modem, props in self.modems:
             self.logger.info("Auto-detected Previous Modem: " + str(modem))
 
-        self.poll_thread = threading.Thread(target=self._poll_for_calls, daemon=True)
-        self.poll_thread.start()
+    def poll(self):
+        self.modems = self.manager.GetModems()  # Update list in case of new modems from newly-paired devices
 
-    def _poll_for_calls(self):
-        self.logger.debug("Now polling for calls.")
+        call_count = 0
+        for modem, modem_props in self.modems:
+            if "org.ofono.VoiceCallManager" not in modem_props["Interfaces"]:
+                continue
 
-        while True:
-            self.modems = self.manager.GetModems()  # Update list in case of new modems from newly-paired devices
+            mgr = dbus.Interface(self.bus.get_object('org.ofono', modem), 'org.ofono.VoiceCallManager')
 
-            call_count = 0
-            for modem, modem_props in self.modems:
-                if "org.ofono.VoiceCallManager" not in modem_props["Interfaces"]:
-                    continue
+            calls = mgr.GetCalls()
 
-                mgr = dbus.Interface(self.bus.get_object('org.ofono', modem), 'org.ofono.VoiceCallManager')
+            for path, properties in calls:
+                state = properties['State']
+                name = properties['Name']
+                incoming_line = ""
+                line_ident = properties['LineIdentification']
+                if state == "incoming":
+                    incoming_line = properties['IncomingLine']
 
-                calls = mgr.GetCalls()
+                if state != "disconnected":
+                    call_count += 1
+                else:
+                    call_count -= 1
 
-                for path, properties in calls:
-                    state = properties['State']
-                    name = properties['Name']
-                    incoming_line = ""
-                    line_ident = properties['LineIdentification']
-                    if state == "incoming":
-                        incoming_line = properties['IncomingLine']
+                if self.bt_mgr.active_connection is not None:
+                    self.bt_mgr.active_connection.send("CALL-STATE~" + modem + "~" + state + "~"
+                                                       + name + "~" + line_ident + "~" + incoming_line)
 
-                    if state != "disconnected":
-                        call_count += 1
-                    else:
-                        call_count -= 1
+        if call_count < 1:
+            self.bt_mgr.router.on_end_call()
+        elif self.active_calls < 1 <= call_count:
+            self.bt_mgr.router.on_start_call()
 
-                    if self.bt_mgr.active_connection is not None:
-                        self.bt_mgr.active_connection.send("CALL-STATE~" + modem + "~" + state + "~"
-                                                           + name + "~" + line_ident + "~" + incoming_line)
-
-            if call_count < 1:
-                self.bt_mgr.router.on_end_call()
-            elif self.active_calls < 1 <= call_count:
-                self.bt_mgr.router.on_start_call()
-
-            self.active_calls = call_count
-            sleep(1)
+        self.active_calls = call_count
+        sleep(1)
 
     def answer_call(self, path):
         call = dbus.Interface(self.bus.get_object('org.ofono', path), 'org.ofono.VoiceCall')
