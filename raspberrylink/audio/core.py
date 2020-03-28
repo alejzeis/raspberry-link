@@ -6,6 +6,7 @@ from time import sleep
 
 import atexit
 import logging
+import queue
 
 from gi.repository import GLib
 import dbus
@@ -23,6 +24,7 @@ class AudioManager:
     handsfree_mgr = None
 
     sock = None
+    send_queue = None
     active_connection = None
     recv_thread = None
     poll_thread = None
@@ -43,6 +45,7 @@ class AudioManager:
 
         self.sock = socket(AF_UNIX, SOCK_STREAM)
         self.sock.bind(socket_file)
+        self.send_queue = queue.Queue()
 
         self.router = routing.PhysicalAudioRouter(self)
 
@@ -89,22 +92,33 @@ class AudioManager:
         while True:
             self.active_connection, addr = self.sock.accept()
             logger.debug("Accepted socket connection")
+            self.active_connection.setblocking(False)
 
             while True:
                 # Check if the connection was closed
                 if self.active_connection.fileno() == -1:
                     break
 
-                data = self.active_connection.recv(512).decode("UTF-8").split("~")
+                try:
+                    raw = self.active_connection.recv(512)
+                    if len(raw) > 1:
+                        data = raw.decode("UTF-8").split("~")
 
-                if data[0] == "CALL-ANSWER":
-                    # Answer the specified call
-                    self.handsfree_mgr.answer_call(data[1])
+                        if data[0] == "CALL-ANSWER":
+                            # Answer the specified call
+                            self.handsfree_mgr.answer_call(data[1])
+                            pass
+                        elif data[0] == "CALL-HANGUP":
+                            # Hangup the specified call
+                            self.handsfree_mgr.hangup_call(data[1])
+                            pass
+                except BlockingIOError:
                     pass
-                elif data[0] == "CALL-HANGUP":
-                    # Hangup the specified call
-                    self.handsfree_mgr.hangup_call(data[1])
-                    pass
+
+                if not self.send_queue.empty():
+                    self.active_connection.send(self.send_queue.get())
+
+                sleep(0.2)
 
 
 # Entry function for raspilink-audio

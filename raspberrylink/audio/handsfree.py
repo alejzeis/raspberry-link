@@ -69,8 +69,8 @@ class HandsfreeManager(DummyHandsfreeManager):
                     call_count -= 1
 
                 if self.bt_mgr.active_connection is not None:
-                    self.bt_mgr.active_connection.send("CALL-STATE~" + modem + "~" + state + "~"
-                                                       + name + "~" + line_ident + "~" + incoming_line)
+                    self.bt_mgr.send_queue.put(("CALL-STATE~" + modem + "~" + state + "~" + name + "~"
+                                                + line_ident + "~" + incoming_line).encode("UTF-8"))
 
         if call_count < 1:
             self.bt_mgr.router.on_end_call()
