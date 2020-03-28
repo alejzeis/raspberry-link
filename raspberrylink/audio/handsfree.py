@@ -58,10 +58,7 @@ class HandsfreeManager(DummyHandsfreeManager):
             for path, properties in calls:
                 state = properties['State']
                 name = properties['Name']
-                incoming_line = ""
                 line_ident = properties['LineIdentification']
-                if state == "incoming":
-                    incoming_line = properties['IncomingLine']
 
                 if state != "disconnected":
                     call_count += 1
@@ -70,7 +67,7 @@ class HandsfreeManager(DummyHandsfreeManager):
 
                 if self.bt_mgr.active_connection is not None:
                     self.bt_mgr.send_queue.put(("CALL-STATE~" + modem + "~" + state + "~" + name + "~"
-                                                + line_ident + "~" + incoming_line).encode("UTF-8"))
+                                                + line_ident).encode("UTF-8"))
 
         if call_count < 1:
             self.bt_mgr.router.on_end_call()

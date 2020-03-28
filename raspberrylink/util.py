@@ -15,7 +15,7 @@ def check_audio_running():
 def check_device_connected():
     con_cmd = run("hcitool con", stdout=PIPE, stderr=PIPE, shell=True)
     if con_cmd.returncode != 0:
-        return False, 0, "Error obtaining Information"
+        return False
 
     output = con_cmd.stdout.decode("UTF-8")
     if output.strip() == "Connections:":
@@ -25,27 +25,21 @@ def check_device_connected():
 
 
 def get_current_audio_info():
-    con_cmd = run("hcitool con", stdout=PIPE, stderr=PIPE, shell=True)
-    if con_cmd.returncode != 0:
-        logger.error("Non-zero return code from \"hcitool con\"")
-        return False, 0, "Error obtaining Information"
-
-    output = con_cmd.stdout.decode("UTF-8")
-    if output.strip() == "Connections:":
-        return False, 0, "No Device Connected"
+    if not check_device_connected():
+        return False, 0, "No Device Connected", ""
     else:
         bluetooth_id = re.search("((?:[A-F0-9]{2}\\:){5}\\S{2})", output).group(0)
         lq_cmd = run("hcitool lq " + bluetooth_id, stdout=PIPE, stderr=PIPE, shell=True)
         if lq_cmd.returncode != 0:
             logger.error("Non-zero return code from \"hcitool lq\"")
-            return False, 0, "Error obtaining Information"
+            return False, 0, "Error obtaining Information", ""
 
         lq = int(lq_cmd.stdout.decode("UTF-8").split(" ")[2].strip())
         info_cmd = run("hcitool info " + bluetooth_id + " | grep \"Device Name\"", stdout=PIPE, stderr=PIPE, shell=True)
 
         if info_cmd.returncode != 0:
             logger.error("Non-zero return code from \"hcitool info\"")
-            return True, lq, "Error obtaining Information"
+            return True, lq, "Error obtaining Information", ""
 
         bluetooth_name = re.search("Device Name: (.*)", info_cmd.stdout.decode("UTF-8")).group(0)
-        return True, lq, bluetooth_name
+        return True, lq, bluetooth_name, bluetooth_id

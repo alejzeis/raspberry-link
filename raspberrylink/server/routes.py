@@ -59,7 +59,7 @@ def checkin():
 
     if audio_support:
         stats = util.get_current_audio_info()
-        res_obj['audio']['connected'], res_obj['audio']['signal_quality'], res_obj['audio']['name'] = stats
+        res_obj['audio']['connected'], res_obj['audio']['signal_quality'], res_obj['audio']['name'] = stats[slice(3)]
 
     if audio_support and server_config['audio'].getboolean("handsfree-enabled"):
         res_obj['calls'] = audio_comm.active_calls

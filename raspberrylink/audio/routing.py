@@ -1,4 +1,5 @@
 from subprocess import Popen, PIPE
+from raspberrylink import util
 
 
 class AudioRouter:
@@ -24,6 +25,7 @@ class PhysicalAudioRouter(AudioRouter):
     aplay_a2dp = None
     aplay_sco = None
     aplay_mic = None
+    arec_mic = None
 
     bluealsa_aplay_exec = None
     aplay_exec = None
@@ -54,9 +56,28 @@ class PhysicalAudioRouter(AudioRouter):
             self.aplay_sco = Popen([self.bluealsa_aplay_exec, "00:00:00:00:00:00", "--profile-sco"],
                                    stdout=PIPE, stderr=PIPE, shell=False)
 
-        if self.aplay_mic is None:
-            # TODO: Begin microphone process
-            pass
+        # Terminate aplay and arecord if already running
+        if self.aplay_mic is not None:
+            self.aplay_mic.terminate()
+            self.aplay_mic.wait()
+
+            self.aplay_mic = None
+        if self.arec_mic is not None:
+            self.arec_mic.terminate()
+            self.arec_mic.wait()
+
+            self.arec_mic = None
+
+        # TODO: ensure it's the right device if multiple devices connected?
+        device_id = util.get_current_audio_info()[3] # Get Bluetooth device ID of current device connected
+        # Pipe Arecord output to Aplay to send over the SCO link
+        self.arec_mic = Popen([self.arecord_exec, "-D", self.audio_manager.config['audio']['arecord-device'],
+                               "-f", self.audio_manager.config['audio']['arecord-format'],
+                               "-c", self.audio_manager.config['audio']['arecord-channels'], "-"],
+                              stdout=PIPE, shell=False)
+        self.aplay_mic = Popen([self.aplay_exec, "-D",
+                                "bluealsa:SRV=org.bluealsa,DEV=" + device_id + ",PROFILE=sco", "-"],
+                               stdout=PIPE, stdin=self.arec_mic.stdout, shell=False)
 
     def on_end_call(self):
         if self.aplay_mic is not None:
@@ -64,6 +85,12 @@ class PhysicalAudioRouter(AudioRouter):
             self.aplay_mic.wait()
 
             self.aplay_mic = None
+
+        if self.arec_mic is not None:
+            self.arec_mic.terminate()
+            self.arec_mic.wait()
+
+            self.arec_mic = None
 
         if self.aplay_sco is not None:
             self.aplay_sco.terminate()

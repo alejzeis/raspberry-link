@@ -31,10 +31,20 @@ bt-name=RaspberryLink
 
 ; Percentage from 1-100 (don't include percent sign) to set the output volume of the Pi to.
 output-volume=75
+; Percentage from 1-100 (don't include percent sign) to set the input volume to. (ignore if handsfree is disabled)
+input-volume=100
 ; Numid for the Audio Playback device (You can find this using "amixer controls", see wiki for more information)
 ; Usually this won't need to be changed unless you are using a USB Sound device.
 ; For more information on how to make sure audio goes through the onboard analog port, or using a USB Sound device, see the wiki.
-mixer-numid=1
+mixer-numid-output=1
+; Same as above except for microphone. You can ignore this if handsfree support is disabled
+mixer-numid-input=0
+
+; Argument for "arecord" as to which device the microphone is on. (use "arecord --list-devices" to find)  
+arecord-device=hw:1
+; Arguments for capturing audio through microphone, the format and the channels to use.
+arecord-format=S16_LE
+arecord-channels=2
 
 ; Location of bluealsa-aplay executable to play audio
 bluealsa-aplay-exec=/usr/bin/bluealsa-aplay
