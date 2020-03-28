@@ -12,23 +12,24 @@ def check_audio_running():
     return run("systemctl status raspberrylink-audio", stdout=PIPE, stderr=PIPE, shell=True).returncode == 0
 
 
-def check_device_connected():
+def get_device_connected():
     con_cmd = run("hcitool con", stdout=PIPE, stderr=PIPE, shell=True)
     if con_cmd.returncode != 0:
-        return False
+        return False, ""
 
     output = con_cmd.stdout.decode("UTF-8")
     if output.strip() == "Connections:":
-        return False
+        return False, ""
     else:
-        return True
+        return True, re.search("((?:[A-F0-9]{2}\\:){5}\\S{2})", output).group(0)
 
 
 def get_current_audio_info():
-    if not check_device_connected():
+    device_connected =  get_device_connected()
+    if not device_connected[0]:
         return False, 0, "No Device Connected", ""
     else:
-        bluetooth_id = re.search("((?:[A-F0-9]{2}\\:){5}\\S{2})", output).group(0)
+        bluetooth_id = device_connected[1]
         lq_cmd = run("hcitool lq " + bluetooth_id, stdout=PIPE, stderr=PIPE, shell=True)
         if lq_cmd.returncode != 0:
             logger.error("Non-zero return code from \"hcitool lq\"")

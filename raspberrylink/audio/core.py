@@ -77,7 +77,7 @@ class AudioManager:
 
     def _poll_connections(self):
         # Check if a device has connected recently, and then start media playback or end it
-        new_status = util.check_device_connected()
+        new_status = util.get_device_connected()[0]
         if not self.device_connected and new_status:
             self.router.on_start_media_playback()
         elif self.device_connected and not new_status:

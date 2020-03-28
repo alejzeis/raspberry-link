@@ -69,7 +69,7 @@ class PhysicalAudioRouter(AudioRouter):
             self.arec_mic = None
 
         # TODO: ensure it's the right device if multiple devices connected?
-        device_id = util.get_current_audio_info()[3] # Get Bluetooth device ID of current device connected
+        device_id = util.get_device_connected()[1]  # Get Bluetooth device ID of current device connected
         # Pipe Arecord output to Aplay to send over the SCO link
         self.arec_mic = Popen([self.arecord_exec, "-D", self.audio_manager.config['audio']['arecord-device'],
                                "-f", self.audio_manager.config['audio']['arecord-format'],
