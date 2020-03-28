@@ -7,7 +7,7 @@ echo "- RaspberryLink Bluetooth Bootstrap Script"
 echo $SYSTEM_VOLUME > /run/raspberrylink_volume
 echo "- Setting volume to " "$SYSTEM_VOLUME"
 
-amixer cset numid=1 $SYSTEM_VOLUME > /dev/null &
+amixer cset numid=$MIXER_NUMID $SYSTEM_VOLUME > /dev/null &
 
 # Set discoverable timeout
 dbus-send --system --dest=org.bluez --print-reply /org/bluez/hci0 org.freedesktop.DBus.Properties.Set string:'org.bluez.Adapter1' string:'DiscoverableTimeout' variant:uint32:0 > /dev/null
@@ -41,6 +41,8 @@ else
   echo "- Started bluealsa process with a2dp-sink profile."
 fi
 
+echo "- Disabling hci1 interface (if applicable)"
+hciconfig hci1 down > /dev/null 2>&1 # Disable onboard bluetooth if using a bluetooth dongle (onboard interface gets remapped to hci1)
 # Put bluetooth interface online
 hciconfig hci0 up
 hciconfig hci0 name "$BLUETOOTH_DEVICE_NAME"

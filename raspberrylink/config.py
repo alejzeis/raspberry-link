@@ -28,8 +28,13 @@ enabled=yes
 handsfree-enabled=no
 ; Name of the Raspberry Pi that will show up when other devices discover and pair to the Pi
 bt-name=RaspberryLink
+
 ; Percentage from 1-100 (don't include percent sign) to set the output volume of the Pi to.
 output-volume=75
+; Numid for the Audio Playback device (You can find this using "amixer controls", see wiki for more information)
+; Usually this won't need to be changed unless you are using a USB Sound device.
+; For more information on how to make sure audio goes through the onboard analog port, or using a USB Sound device, see the wiki.
+mixer-numid=1
 
 ; Location of bluealsa-aplay executable to play audio
 bluealsa-aplay-exec=/usr/bin/bluealsa-aplay

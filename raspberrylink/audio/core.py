@@ -135,10 +135,12 @@ def bootstrap():
     handsfree_support = conf['audio'].getboolean("handsfree-enabled")
     name = conf['audio']['bt-name']
     volume = conf['audio']['output-volume'] + "%"
+    mixer_numid = conf['audio']['mixer-numid']
 
-    logger.info("Running bootstrap script")
-    run("HANDSFREE=" + str(int(handsfree_support)) + " BLUETOOTH_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume
-        + " raspilink-audio-start", shell=True)
+    cmd = "HANDSFREE=" + str(int(handsfree_support)) + " BLUETOOTH_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume \
+          + " MIXER_NUMID=" + mixer_numid + " raspilink-audio-start"
+    logger.info("Running bootstrap script: " + cmd)
+    run(cmd, shell=True)
 
     AudioManager(conf)
 

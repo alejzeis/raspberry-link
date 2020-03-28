@@ -15,10 +15,8 @@ case "$action" in
 add)
     printf "discoverable off\npairable off\nexit\n" | bluetoothctl
     echo $NAME | tr -d '"' > /var/cache/bluetooth/reconnect_device  # Save the mac address of the last connected device (for reconnect after reboot)
-    amixer cset numid=1 $SYSTEM_VOLUME > /dev/null &
     ;;
 remove)
     printf "discoverable on\npairable on\nexit\n" | bluetoothctl
-    amixer cset numid=1 $SYSTEM_VOLUME > /dev/null &
     ;;
 esac
