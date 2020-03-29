@@ -45,6 +45,7 @@ class AudioManager:
 
         self.sock = socket(AF_UNIX, SOCK_STREAM)
         self.sock.bind(socket_file)
+        logger.debug("Bound socket to " + socket_file)
         self.send_queue = queue.Queue()
 
         self.router = routing.PhysicalAudioRouter(self)
@@ -125,7 +126,7 @@ class AudioManager:
 def bootstrap():
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
-    logger.info("Starting RaspberryLink Bluetooth Audio Service")
+    logger.info("Starting RaspberryLink Bluetooth Audio Service...")
 
     conf = config.load_server_config()
     if not conf['audio'].getboolean("enabled"):
@@ -136,13 +137,18 @@ def bootstrap():
     name = conf['audio']['bt-name']
     volume = conf['audio']['output-volume'] + "%"
     mixer_numid = conf['audio']['mixer-numid-output']
+    mic_mixer_numid = conf['audio']['mixer-numid-input']
+    mic_volume = conf['audio']['input-volume'] + "%"
 
     cmd = "HANDSFREE=" + str(int(handsfree_support)) + " BLUETOOTH_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume \
-          + " MIXER_NUMID=" + mixer_numid + " raspilink-audio-start"
+          + " MIXER_NUMID=" + mixer_numid + "MIC_MIXER_NUMID=" + mic_mixer_numid \
+          + " MICROPHONE_VOLUME=" + mic_volume + " raspilink-audio-start"
     logger.info("Running bootstrap script: " + cmd)
     run(cmd, shell=True)
 
     AudioManager(conf)
+
+    logger.info("Done! Starting GLib Main Loop.")
 
     mainloop = GLib.MainLoop()
     mainloop.run()

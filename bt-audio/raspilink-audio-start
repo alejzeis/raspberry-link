@@ -5,11 +5,12 @@
 echo "- RaspberryLink Bluetooth Bootstrap Script"
 
 echo $SYSTEM_VOLUME > /run/raspberrylink_volume
-echo "- Setting volume to " "$SYSTEM_VOLUME"
+echo "- Setting output volume to " "$SYSTEM_VOLUME"
 
 amixer cset numid=$MIXER_NUMID $SYSTEM_VOLUME > /dev/null &
 
 # Set discoverable timeout
+echo "- Setting discoverable timeout"
 dbus-send --system --dest=org.bluez --print-reply /org/bluez/hci0 org.freedesktop.DBus.Properties.Set string:'org.bluez.Adapter1' string:'DiscoverableTimeout' variant:uint32:0 > /dev/null
 
 # TODO: Determine if this is needed
@@ -17,41 +18,45 @@ echo "- Restarting bluetooth service"
 systemctl restart bluetooth > /dev/null
 sleep 2
 
+echo "- Becoming discoverable and pairable..."
 printf "discoverable on\npairable on\nexit\n" | bluetoothctl > /dev/null
-echo "- Now discoverable and pairable"
 
 # Start bluetooth and audio agent
+echo "- Starting Python BlueZ Agent"
 /usr/lib/raspberrylink/raspilink-bt-agent &
-echo "- Started Python BlueZ Agent"
 
 sleep 2
 
 # Try to stop current running bluealsa process, as it isn't running with the correct profiles set
+echo "- Attempting to stop bluealsa service..."
 systemctl stop bluealsa
 rm -rf /var/run/bluealsa/
 
 # Start new bluealsa process (a2dp-sink to recieve media audio, hfp-ofono to recieve call and SMS information via ofono)
 # Check if handsfree support for calls is enabled, then we need hfp-ofono profile enabled, otherwise we don't
 if [ $HANDSFREE -eq 1 ]; then
+  echo "- Setting microphone input volume to " "$MICROPHONE_VOLUME"
+  amixer cset numid=$MIC_MIXER_NUMID $MICROPHONE_VOLUME > /dev/null &
+
+  echo "- Starting bluealsa process with a2dp-sink and hfp-ofono profiles."
   # Append LD_LIBRARY_PATH so bluealsa can find fdk-aac library (since it all had to be compiled and installed from source)
   LD_LIBRARY_PATH=/usr/local/lib /usr/bin/bluealsa -i hci0 -p a2dp-sink -p hfp-ofono &
-  echo "- Started bluealsa process with a2dp-sink and hfp-ofono profiles."
 else
+  echo "- Starting bluealsa process with a2dp-sink profile."
   /usr/bin/bluealsa -i hci0 -p a2dp-sink &
-  echo "- Started bluealsa process with a2dp-sink profile."
 fi
 
 echo "- Disabling hci1 interface (if applicable)"
 hciconfig hci1 down > /dev/null 2>&1 # Disable onboard bluetooth if using a bluetooth dongle (onboard interface gets remapped to hci1)
 # Put bluetooth interface online
+echo "- Bringing hci0 online with name: " "$BLUETOOTH_DEVICE_NAME"
 hciconfig hci0 up
 hciconfig hci0 name "$BLUETOOTH_DEVICE_NAME"
 echo "- Bluetooth interface hci0 online"
-echo "- Device Name is: " "$BLUETOOTH_DEVICE_NAME"
 
 # Enable simple pairing (no pin code)
+echo "- Enabling SSP (Secure Simple Pairing)"
 hciconfig hci0 sspmode 1  # Secure Simple Pairing
-echo "- Enabled SSP (Secure Simple Pairing)"
 
 # Reconnect if there is a known device
 sleep 2
