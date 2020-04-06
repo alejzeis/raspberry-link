@@ -24,8 +24,8 @@ class AudioManager:
     handsfree_mgr = None
 
     sock = None
-    send_queue = None
-    active_connection = None
+    socket_send_queue = None
+    active_socket_connection = None
     recv_thread = None
     poll_thread = None
 
@@ -46,7 +46,7 @@ class AudioManager:
         self.sock = socket(AF_UNIX, SOCK_STREAM)
         self.sock.bind(socket_file)
         logger.debug("Bound socket to " + socket_file)
-        self.send_queue = queue.Queue()
+        self.socket_send_queue = queue.Queue()
 
         self.router = routing.PhysicalAudioRouter(self)
 
@@ -59,8 +59,8 @@ class AudioManager:
         self.poll_thread.start()
 
     def _exit_handler(self):
-        if self.active_connection is not None:
-            self.active_connection.close()
+        if self.active_socket_connection is not None:
+            self.active_socket_connection.close()
 
         self.sock.close()
 
@@ -91,17 +91,17 @@ class AudioManager:
         self.sock.listen(1)
 
         while True:
-            self.active_connection, addr = self.sock.accept()
+            self.active_socket_connection, addr = self.sock.accept()
             logger.debug("Accepted socket connection")
-            self.active_connection.setblocking(False)
+            self.active_socket_connection.setblocking(False)
 
             while True:
                 # Check if the connection was closed
-                if self.active_connection.fileno() == -1:
+                if self.active_socket_connection.fileno() == -1:
                     break
 
                 try:
-                    raw = self.active_connection.recv(512)
+                    raw = self.active_socket_connection.recv(512)
                     if len(raw) > 1:
                         data = raw.decode("UTF-8").split("~")
 
@@ -116,8 +116,8 @@ class AudioManager:
                 except BlockingIOError:
                     pass
 
-                if not self.send_queue.empty():
-                    self.active_connection.send(self.send_queue.get())
+                if not self.socket_send_queue.empty():
+                    self.active_socket_connection.send(self.socket_send_queue.get())
 
                 sleep(0.2)
 

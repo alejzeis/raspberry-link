@@ -23,15 +23,15 @@ class HandsfreeManager(DummyHandsfreeManager):
     manager = None
     modems = None
 
-    bt_mgr = None
+    audio_manager = None
 
     logger = logging.getLogger("RL-HandsfreeManager")
 
     active_calls = 0
 
-    def __init__(self, bt_mgr):
+    def __init__(self, audio_manager):
         super().__init__()
-        self.bt_mgr = bt_mgr
+        self.audio_manager = audio_manager
 
         self.logger.setLevel(logging.INFO)
 
@@ -47,6 +47,7 @@ class HandsfreeManager(DummyHandsfreeManager):
         self.modems = self.manager.GetModems()  # Update list in case of new modems from newly-paired devices
 
         call_count = 0
+        calls_data = ""
         for modem, modem_props in self.modems:
             if "org.ofono.VoiceCallManager" not in modem_props["Interfaces"]:
                 continue
@@ -65,16 +66,19 @@ class HandsfreeManager(DummyHandsfreeManager):
                 else:
                     call_count -= 1
 
-                if self.bt_mgr.active_connection is not None:
-                    self.bt_mgr.send_queue.put(("CALL-STATE~" + modem + "~" + state + "~" + name + "~"
-                                                + line_ident).encode("UTF-8"))
+                if self.audio_manager.active_connection is not None:
+                    calls_data += ("~" + modem + "~" + state + "~" + name + "~" + line_ident)
 
         if call_count < 1:
-            self.bt_mgr.router.on_end_call()
+            self.audio_manager.router.on_end_call()
         elif self.active_calls < 1 <= call_count:
-            self.bt_mgr.router.on_start_call()
+            self.audio_manager.router.on_start_call()
 
         self.active_calls = call_count
+
+        # Send our current Call List to the main Server process
+        if self.audio_manager.active_socket_connection is not None and calls_data != "":
+            self.audio_manager.socket_send_queue.put(("CALLS-LIST" + calls_data).encode("UTF-8"))
 
     def answer_call(self, path):
         call = dbus.Interface(self.bus.get_object('org.ofono', path), 'org.ofono.VoiceCall')
