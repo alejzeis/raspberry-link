@@ -36,7 +36,16 @@ class AudioServiceCommunicator:
 
             if data[0] == "CALL-STATE":
                 # Call state change, new incoming call, new outgoing call, or hung up TODO
-                self.logger.debug("Call State Data: " + str(data))
-                pass
+                calls = data[1].split("|")
+                active_calls = {}
+                for call in calls:
+                    call_data = call.split("`")
+                    active_calls[call_data[3]] = {
+                        "modem": call_data[0],
+                        "state": call_data[1],
+                        "name": call_data[2]
+                    }
+
+                self.active_calls = active_calls
             else:
                 self.logger.debug("Unknown message from RaspberryLink Audio process " + str(data))

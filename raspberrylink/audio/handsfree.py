@@ -67,7 +67,7 @@ class HandsfreeManager(DummyHandsfreeManager):
                     call_count -= 1
 
                 if self.audio_manager.active_connection is not None:
-                    calls_data += ("~" + modem + "~" + state + "~" + name + "~" + line_ident)
+                    calls_data += ("`" + modem + "`" + state + "`" + name + "`" + line_ident + "|")
 
         if call_count < 1:
             self.audio_manager.router.on_end_call()
@@ -78,7 +78,8 @@ class HandsfreeManager(DummyHandsfreeManager):
 
         # Send our current Call List to the main Server process
         if self.audio_manager.active_socket_connection is not None and calls_data != "":
-            self.audio_manager.socket_send_queue.put(("CALLS-LIST" + calls_data).encode("UTF-8"))
+            # [:-1] to remove redundant "|" from end of string
+            self.audio_manager.socket_send_queue.put(("CALLS-LIST" + calls_data[:-1]).encode("UTF-8"))
 
     def answer_call(self, path):
         call = dbus.Interface(self.bus.get_object('org.ofono', path), 'org.ofono.VoiceCall')
