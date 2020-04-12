@@ -81,8 +81,12 @@ class AudioManager:
         new_status = util.get_device_connected()[0]
         if not self.device_connected and new_status:
             self.router.on_start_media_playback()
+            if self.call_support:  # Begin routing call-audio if supported
+                self.router.on_start_call()
         elif self.device_connected and not new_status:
             self.router.on_stop_media_playback()
+            if self.call_support: # Stop call audio routing if supported
+                self.router.on_end_call()
 
         self.device_connected = new_status
 

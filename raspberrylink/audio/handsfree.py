@@ -69,11 +69,6 @@ class HandsfreeManager(DummyHandsfreeManager):
                 if self.audio_manager.active_connection is not None:
                     calls_data += ("`" + modem + "`" + state + "`" + name + "`" + line_ident + "|")
 
-        if call_count < 1:
-            self.audio_manager.router.on_end_call()
-        elif self.active_calls < 1 <= call_count:
-            self.audio_manager.router.on_start_call()
-
         self.active_calls = call_count
 
         # Send our current Call List to the main Server process

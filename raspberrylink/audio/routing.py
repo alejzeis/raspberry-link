@@ -88,7 +88,7 @@ class PhysicalAudioRouter(AudioRouter):
 
         if self.arec_mic is not None:
             self.arec_mic.terminate()
-            self.arec_mic.wait()
+            self.arec_mic.kill()
 
             self.arec_mic = None
 
