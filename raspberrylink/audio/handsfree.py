@@ -73,8 +73,7 @@ class HandsfreeManager(DummyHandsfreeManager):
 
         # Send our current Call List to the main Server process
         if self.audio_manager.active_socket_connection is not None and calls_data != "":
-            # [:-1] to remove redundant "|" from end of string
-            self.audio_manager.socket_send_queue.put(("CALLS-LIST" + calls_data[:-1]).encode("UTF-8"))
+            self.audio_manager.socket_send_queue.put(("CALLS-LIST~" + calls_data).encode("UTF-8"))
 
     def answer_call(self, path):
         call = dbus.Interface(self.bus.get_object('org.ofono', path), 'org.ofono.VoiceCall')

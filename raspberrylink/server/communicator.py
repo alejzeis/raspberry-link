@@ -35,10 +35,12 @@ class AudioServiceCommunicator:
             data = self.sock.recv(512).decode("UTF-8").split("~")
 
             if data[0] == "CALL-STATE":
-                # Call state change, new incoming call, new outgoing call, or hung up TODO
                 calls = data[1].split("|")
                 active_calls = {}
                 for call in calls:
+                    if call == "":
+                        break
+
                     call_data = call.split("`")
                     active_calls[call_data[3]] = {
                         "modem": call_data[0],
