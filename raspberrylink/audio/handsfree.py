@@ -66,8 +66,8 @@ class HandsfreeManager(DummyHandsfreeManager):
                 else:
                     call_count -= 1
 
-                if self.audio_manager.active_connection is not None:
-                    calls_data += ("`" + modem + "`" + state + "`" + name + "`" + line_ident + "|")
+                if self.audio_manager.active_socket_connection is not None:
+                    calls_data += (modem + "`" + state + "`" + name + "`" + line_ident + "|")
 
         self.active_calls = call_count
 

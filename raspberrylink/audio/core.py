@@ -145,7 +145,7 @@ def bootstrap():
     mic_volume = conf['audio']['input-volume'] + "%"
 
     cmd = "HANDSFREE=" + str(int(handsfree_support)) + " BLUETOOTH_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume \
-          + " MIXER_NUMID=" + mixer_numid + "MIC_MIXER_NUMID=" + mic_mixer_numid \
+          + " MIXER_NUMID=" + mixer_numid + " MIC_MIXER_NUMID=" + mic_mixer_numid \
           + " MICROPHONE_VOLUME=" + mic_volume + " raspilink-audio-start"
     logger.info("Running bootstrap script: " + cmd)
     run(cmd, shell=True)
