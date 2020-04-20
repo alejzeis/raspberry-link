@@ -39,6 +39,8 @@ class AudioManager:
         self.config = conf
         self.call_support = conf['audio'].getboolean("handsfree-enabled")
         if self.call_support:
+            logger.warning("Experimental handsfree support is enabled. This feature may not work as well as intended"
+                           ", or may not work at all.")
             self.handsfree_mgr = handsfree.HandsfreeManager(self)
         else:
             self.handsfree_mgr = handsfree.DummyHandsfreeManager()
