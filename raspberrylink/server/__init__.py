@@ -5,7 +5,7 @@ from raspberrylink.server import obd, communicator
 from raspberrylink import config
 
 software_name = "RaspberryLink-Server"
-software_version = "1.0a2"
+software_version = "1.0a3"
 
 logger = getLogger("RL-Server-Main")
 logger.setLevel(INFO)

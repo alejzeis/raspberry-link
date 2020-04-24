@@ -1,8 +1,8 @@
 #!/bin/sh
 
 rm -rf dist
+rm -rf deb_dist
 
 chmod +x bt-audio/raspilink-audio-start
-chmod +x bt-audio/raspilink-audio-udev-hook
 
-python3 setup.py --command-packages=stdeb.command bdist_deb
+DEB_BUILD_OPTIONS=nocheck python3 setup.py --command-packages=stdeb.command bdist_deb
