@@ -18,7 +18,7 @@ setup(
       'raspilink-server=raspberrylink.server:run_server',
       'raspilink-agent=raspberrylink.agent:run_agent',
       'raspilink-audio=raspberrylink.audio.core:bootstrap',
-      'raspilink-bt-agent=raspberrylink.bt-agent:run'
+      'raspilink-bt-agent=raspberrylink.bt_agent:run'
     ]
   },
   data_files=[
