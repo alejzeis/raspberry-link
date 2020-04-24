@@ -82,7 +82,7 @@ class Agent(dbus.service.Object):
         print("Cancel")
 
 
-if __name__ == '__main__':
+def run():
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
     bus = dbus.SystemBus()

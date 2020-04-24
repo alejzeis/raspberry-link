@@ -5,7 +5,7 @@ __author__ = "jython234"
 
 setup(
   name='raspberrylink',
-  version='1.0.0-pre',
+  version='1.0a1',
   description='Raspberrylink Smart-car system for Raspberry Pi',
   author=__author__,
   author_email='jython234@gmail.com',
@@ -17,7 +17,15 @@ setup(
     'console_scripts': [
       'raspilink-server=raspberrylink.server:run_server',
       'raspilink-agent=raspberrylink.agent:run_agent',
-      'raspilink-audio=raspberrylink.audio.core:bootstrap'
+      'raspilink-audio=raspberrylink.audio.core:bootstrap',
+      'raspilink-bt-agent=raspberrylink.bt-agent:run'
     ]
   },
+  data_files=[
+    ('/usr/lib/systemd/system/', ['raspberrylink-agent.service', 'raspberrylink-audio.service',
+                                  'raspberrylink-server.service'],
+     ),
+    ('/usr/src/raspberrylink', ['bt-audio/raspilink-audio-start', 'bt-audio/raspilink-audio-udev-hook']),
+    ('/etc/udev/rules.d/', ['99-bluetooth-udev.rules'])
+  ]
 )

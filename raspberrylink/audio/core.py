@@ -2,6 +2,7 @@ from subprocess import run
 from threading import Thread
 from socket import socket, AF_UNIX, SOCK_STREAM
 from sys import exit
+from os import remove
 from time import sleep
 
 import atexit
@@ -23,6 +24,7 @@ logger.setLevel(logging.INFO)
 class AudioManager:
     handsfree_mgr = None
 
+    socket_file = ""
     sock = None
     socket_send_queue = None
     active_socket_connection = None
@@ -37,6 +39,7 @@ class AudioManager:
 
     def __init__(self, conf, socket_file="/run/raspberrylink_audio.socket"):
         self.config = conf
+        self.socket_file = socket_file
         self.call_support = conf['audio'].getboolean("handsfree-enabled")
         if self.call_support:
             self.handsfree_mgr = handsfree.HandsfreeManager(self)
@@ -63,6 +66,8 @@ class AudioManager:
             self.active_socket_connection.close()
 
         self.sock.close()
+
+        remove(self.socket_file)  # Closing the socket doesn't actually delete the file
 
         self.router.on_stop_media_playback()
         self.router.on_end_call()
@@ -146,7 +151,7 @@ def bootstrap():
 
     cmd = "HANDSFREE=" + str(int(handsfree_support)) + " BLUETOOTH_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume \
           + " MIXER_NUMID=" + mixer_numid + " MIC_MIXER_NUMID=" + mic_mixer_numid \
-          + " MICROPHONE_VOLUME=" + mic_volume + " raspilink-audio-start"
+          + " MICROPHONE_VOLUME=" + mic_volume + " /usr/src/raspberrylink/raspilink-audio-start"
     logger.info("Running bootstrap script: " + cmd)
     run(cmd, shell=True)
 
