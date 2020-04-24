@@ -5,7 +5,7 @@ __author__ = "jython234"
 
 setup(
   name='raspberrylink',
-  version='1.0a1',
+  version='1.0a2',
   description='Raspberrylink Smart-car system for Raspberry Pi',
   author=__author__,
   author_email='jython234@gmail.com',
@@ -25,7 +25,6 @@ setup(
     ('/usr/lib/systemd/system/', ['raspberrylink-agent.service', 'raspberrylink-audio.service',
                                   'raspberrylink-server.service'],
      ),
-    ('/usr/src/raspberrylink', ['bt-audio/raspilink-audio-start', 'bt-audio/raspilink-audio-udev-hook']),
-    ('/etc/udev/rules.d/', ['99-bluetooth-udev.rules'])
+    ('/usr/src/raspberrylink', ['bt-audio/raspilink-audio-start'])
   ]
 )
