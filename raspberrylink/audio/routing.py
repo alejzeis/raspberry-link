@@ -73,7 +73,8 @@ class PhysicalAudioRouter(AudioRouter):
         # Pipe Arecord output to Aplay to send over the SCO link
         self.arec_mic = Popen([self.arecord_exec, "-D", self.audio_manager.config['audio']['arecord-device'],
                                "-f", self.audio_manager.config['audio']['arecord-format'],
-                               "-c", self.audio_manager.config['audio']['arecord-channels'], "-"],
+                               "-c", self.audio_manager.config['audio']['arecord-channels'],
+                               "-r", self.audio_manager.config['audio']['arecord-sample-rate'], "-"],
                               stdout=PIPE, shell=False)
         self.aplay_mic = Popen([self.aplay_exec, "-D",
                                 "bluealsa:SRV=org.bluealsa,DEV=" + device_id + ",PROFILE=sco", "-"],

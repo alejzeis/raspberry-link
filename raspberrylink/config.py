@@ -22,7 +22,7 @@ port=9099
 ; Enable Bluetooth audio support
 ; This only enables Media playback support. To enable calls and handsfree support look below
 enabled=yes 
-; Enable HFP (Handsfree-profile) Bluetooth support
+; EXPERIMENTAL: Enable HFP (Handsfree-profile) Bluetooth support
 ; This allows calls to be placed and recieved over the bluetooth connection
 ; NOTICE: BlueALSA MUST be compiled with the --enable-ofono option, and Ofono must be installed and running
 handsfree-enabled=no
@@ -40,11 +40,16 @@ mixer-numid-output=1
 ; Same as above except for microphone. You can ignore this if handsfree support is disabled
 mixer-numid-input=0
 
+; ----------------------------------------------------------
+; Advanced Configuring of microphone settings for sending call audio to the phone
+; ----------------------------------------------------------
+
 ; Argument for "arecord" as to which device the microphone is on. (use "arecord --list-devices" to find)  
-arecord-device=hw:1
+arecord-device=plughw:1
 ; Arguments for capturing audio through microphone, the format and the channels to use.
 arecord-format=S16_LE
-arecord-channels=2
+arecord-sample-rate=16000
+arecord-channels=1
 
 ; Location of bluealsa-aplay executable to play audio
 bluealsa-aplay-exec=/usr/bin/bluealsa-aplay
