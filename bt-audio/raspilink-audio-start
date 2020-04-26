@@ -23,7 +23,7 @@ printf "discoverable on\npairable on\nexit\n" | bluetoothctl > /dev/null
 
 # Start bluetooth and audio agent
 echo "- Starting Python BlueZ Agent"
-raspilink-bt-agent &
+/usr/src/raspberrylink/raspilink-bt-agent.py &
 
 sleep 2
 
