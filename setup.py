@@ -5,7 +5,7 @@ __author__ = "jython234"
 
 setup(
   name='raspberrylink',
-  version='1.0a4',
+  version='1.0-git',
   description='Raspberrylink Smart-car system for Raspberry Pi',
   author=__author__,
   author_email='jython234@gmail.com',

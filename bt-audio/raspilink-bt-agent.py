@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # Modified from https://github.com/balenalabs/balena-sound/blob/master/bluetooth-audio/bluetooth-agent
 
 # from __future__ import absolute_import, print_function, unicode_literals
