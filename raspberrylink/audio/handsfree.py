@@ -73,6 +73,7 @@ class HandsfreeManager(DummyHandsfreeManager):
 
         # Send our current Call List to the main Server process
         if self.audio_manager.active_socket_connection is not None and calls_data != "":
+            self.audio_manager.on_call_active()
             self.audio_manager.socket_send_queue.put(("CALLS-LIST~" + calls_data).encode("UTF-8"))
 
     def answer_call(self, path):

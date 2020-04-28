@@ -36,6 +36,7 @@ class AudioManager:
     config = None
 
     device_connected = False
+    call_audio_routing_begun = False
 
     def __init__(self, conf, socket_file="/run/raspberrylink_audio.socket"):
         self.config = conf
@@ -88,14 +89,24 @@ class AudioManager:
         new_status = util.get_device_connected()[0]
         if not self.device_connected and new_status:
             self.router.on_start_media_playback()
-            if self.call_support:  # Begin routing call-audio if supported
-                self.router.on_start_call()
         elif self.device_connected and not new_status:
             self.router.on_stop_media_playback()
-            if self.call_support: # Stop call audio routing if supported
+            if self.call_support:  # Stop call audio routing if supported
+                # Reset call audio routing variable since we don't have a device connected anymore
+                self.call_audio_routing_begun = False
                 self.router.on_end_call()
 
         self.device_connected = new_status
+
+    # Called by the Handsfree manager when there is an active call
+    def on_call_active(self):
+        # check to make sure we haven't already started routing call audio for the device
+        if not self.call_support or self.call_audio_routing_begun:
+            return
+
+        # start routing call audio
+        self.router.on_start_call()
+        self.call_audio_routing_begun = True
 
     def _recv_data(self):
         logger.info("Started Socket Receive thread")
