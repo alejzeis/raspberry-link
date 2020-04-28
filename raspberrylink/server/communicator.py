@@ -1,3 +1,4 @@
+from time import sleep
 import socket
 import threading
 import logging
@@ -14,14 +15,26 @@ class AudioServiceCommunicator:
     def __init__(self, socket_file="/run/raspberrylink_audio.socket"):
         self.logger.setLevel(logging.DEBUG)
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+
+        retries = 0
+        while retries < 5:
+            if self._try_connect(socket_file):
+                return  # Connection successful
+            sleep(3)
+
+        # Connection wasn't successful if we made it here
+        raise RuntimeError("Failed to connect to RaspberryLink Audio Socket (perhaps the service isn't running?)")
+
+    def _try_connect(self, socket_file):
         try:
             self.sock.connect(socket_file)
             self.logger.debug("Connected to RaspberryLink Audio socket")
 
             self.recv_thread = threading.Thread(target=self._process_recv, daemon=True)
             self.recv_thread.start()
+            return True
         except FileNotFoundError:
-            raise RuntimeError("Failed to connect to RaspberryLink Audio Socket (perhaps the service isn't running?)")
+            return False
 
     def answer_call(self, path):
         self.sock.send(("CALL-ANSWER~" + path).encode("UTF-8"))
