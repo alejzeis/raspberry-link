@@ -63,7 +63,11 @@ sleep 2
 if [ -f "/var/cache/bluetooth/reconnect_device" ]; then
   TRUSTED_MAC_ADDRESS=$(cat /var/cache/bluetooth/reconnect_device)
   echo "- Attempting to reconnect to previous bluetooth device: " "$TRUSTED_MAC_ADDRESS"
-  printf "connect %s\nexit\n" "$TRUSTED_MAC_ADDRESS" | bluetoothctl > /dev/null
+  if [ $MULTIPLE_ADAPTERS -eq 1 ]; then
+    printf "select %s\nconnect %s\nexit\n" "$BT_ADAPTER_ADDR" "$TRUSTED_MAC_ADDRESS" | bluetoothctl > /dev/null
+  else
+    printf "connect %s\nexit\n" "$TRUSTED_MAC_ADDRESS" | bluetoothctl > /dev/null
+  fi
   sleep 2
 fi
 

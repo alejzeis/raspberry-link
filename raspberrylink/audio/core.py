@@ -86,17 +86,21 @@ class AudioManager:
 
     def _poll_connections(self):
         # Check if a device has connected recently, and then start media playback or end it
-        new_status = util.get_device_connected()[0]
-        if not self.device_connected and new_status:
+        new_status = util.get_device_connected()
+        if not self.device_connected and new_status[0]:
             self.router.on_start_media_playback()
-        elif self.device_connected and not new_status:
+            # Save bluetooth address to try to automatically reconnect on next startup
+            f = open('/var/cache/bluetooth/reconnect_device', 'w')
+            f.write(new_status[1])
+            f.close()
+        elif self.device_connected and not new_status[0]:
             self.router.on_stop_media_playback()
             if self.call_support:  # Stop call audio routing if supported
                 # Reset call audio routing variable since we don't have a device connected anymore
                 self.call_audio_routing_begun = False
                 self.router.on_end_call()
 
-        self.device_connected = new_status
+        self.device_connected = new_status[0]
 
     # Called by the Handsfree manager when there is an active call
     def on_call_active(self):
@@ -157,6 +161,7 @@ def bootstrap():
 
     handsfree_support = conf['audio'].getboolean("handsfree-enabled")
     name = conf['audio']['bt-name']
+    adapter_address = conf['audio']['bt-adapter-address']
     volume = conf['audio']['output-volume'] + "%"
     mixer_numid = conf['audio']['mixer-numid-output']
     mic_mixer_numid = conf['audio']['mixer-numid-input']
@@ -165,6 +170,12 @@ def bootstrap():
     cmd = "HANDSFREE=" + str(int(handsfree_support)) + " BLUETOOTH_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume \
           + " MIXER_NUMID=" + mixer_numid + " MIC_MIXER_NUMID=" + mic_mixer_numid \
           + " MICROPHONE_VOLUME=" + mic_volume + " /usr/src/raspberrylink/raspilink-audio-start"
+
+    if adapter_address != "00:00:00:00:00:00":
+        cmd = "MULTIPLE_ADAPTERS=1 BT_ADAPTER_ADDR=" + adapter_address + " " + cmd
+    else:
+        cmd = "MULTIPLE_ADAPTERS=0 " + cmd
+
     logger.info("Running bootstrap script: " + cmd)
     run(cmd, shell=True)
 

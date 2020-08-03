@@ -22,6 +22,10 @@ port=9099
 ; Enable Bluetooth audio support
 ; This only enables Media playback support. To enable calls and handsfree support look below
 enabled=yes 
+; The Bluetooth device address of the Bluetooth adapter on the Pi
+; This is only used if you have multiple adapters, otherwise leave empty
+bt-adapter-address=00:00:00:00:00:00
+
 ; EXPERIMENTAL: Enable HFP (Handsfree-profile) Bluetooth support
 ; This allows calls to be placed and recieved over the bluetooth connection
 ; NOTICE: BlueALSA MUST be compiled with the --enable-ofono option, and Ofono must be installed and running
