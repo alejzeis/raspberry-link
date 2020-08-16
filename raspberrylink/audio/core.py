@@ -77,9 +77,12 @@ class AudioManager:
             f = open('/var/cache/bluetooth/reconnect_device', 'w')
             f.write(new_status[1])
             f.close()
+
             logger.info("Device connected: " + new_status[1])
+            self.handsfree_mgr.on_device_connected(new_status[1])
         elif self.device_connected and not new_status[0]:
             logger.info("Device disconnected: " + new_status[1])
+            self.handsfree_mgr.on_device_disconnected(new_status[1])
 
         self.device_connected = new_status[0]
 
