@@ -14,7 +14,7 @@ import dbus
 import dbus.mainloop.glib
 
 from raspberrylink import config, util
-from raspberrylink.audio import handsfree, routing
+from raspberrylink.audio import handsfree
 
 
 logger = logging.getLogger("RL-Audio")
@@ -31,30 +31,19 @@ class AudioManager:
     recv_thread = None
     poll_thread = None
 
-    call_support = False
-    router = None
     config = None
 
     device_connected = False
-    call_audio_routing_begun = False
 
     def __init__(self, conf, socket_file="/run/raspberrylink_audio.socket"):
         self.config = conf
         self.socket_file = socket_file
-        self.call_support = conf['audio'].getboolean("handsfree-enabled")
-        if self.call_support:
-            logger.warning("Experimental handsfree support is enabled. This feature may not work as well as intended"
-                           ", or may not work at all.")
-            self.handsfree_mgr = handsfree.HandsfreeManager(self)
-        else:
-            self.handsfree_mgr = handsfree.DummyHandsfreeManager()
+        self.handsfree_mgr = handsfree.HandsfreeManager(self)
 
         self.sock = socket(AF_UNIX, SOCK_STREAM)
         self.sock.bind(socket_file)
         logger.debug("Bound socket to " + socket_file)
         self.socket_send_queue = queue.Queue()
-
-        self.router = routing.PhysicalAudioRouter(self)
 
         atexit.register(self._exit_handler)
 
@@ -72,15 +61,11 @@ class AudioManager:
 
         remove(self.socket_file)  # Closing the socket doesn't actually delete the file
 
-        self.router.on_stop_media_playback()
-        self.router.on_end_call()
-
     def _poll(self):
         logger.info("Starting Polling Thread")
         while True:
             self._poll_connections()
-            if self.call_support:
-                self.handsfree_mgr.poll()
+            self.handsfree_mgr.poll()
 
             sleep(0.5)
 
@@ -88,29 +73,15 @@ class AudioManager:
         # Check if a device has connected recently, and then start media playback or end it
         new_status = util.get_device_connected()
         if not self.device_connected and new_status[0]:
-            self.router.on_start_media_playback()
             # Save bluetooth address to try to automatically reconnect on next startup
             f = open('/var/cache/bluetooth/reconnect_device', 'w')
             f.write(new_status[1])
             f.close()
+            logger.info("Device connected: " + new_status[1])
         elif self.device_connected and not new_status[0]:
-            self.router.on_stop_media_playback()
-            if self.call_support:  # Stop call audio routing if supported
-                # Reset call audio routing variable since we don't have a device connected anymore
-                self.call_audio_routing_begun = False
-                self.router.on_end_call()
+            logger.info("Device disconnected: " + new_status[1])
 
         self.device_connected = new_status[0]
-
-    # Called by the Handsfree manager when there is an active call
-    def on_call_active(self):
-        # check to make sure we haven't already started routing call audio for the device
-        if not self.call_support or self.call_audio_routing_begun:
-            return
-
-        # start routing call audio
-        self.router.on_start_call()
-        self.call_audio_routing_begun = True
 
     def _recv_data(self):
         logger.info("Started Socket Receive thread")
@@ -155,11 +126,7 @@ def bootstrap():
     logger.info("Starting RaspberryLink Bluetooth Audio Service...")
 
     conf = config.load_server_config()
-    if not conf['audio'].getboolean("enabled"):
-        logger.error("Audio support not enabled in RaspberryLink Server config. Exiting")
-        exit(1)
 
-    handsfree_support = conf['audio'].getboolean("handsfree-enabled")
     name = conf['audio']['bt-name']
     adapter_address = conf['audio']['bt-adapter-address']
     volume = conf['audio']['output-volume'] + "%"
@@ -167,7 +134,7 @@ def bootstrap():
     mic_mixer_numid = conf['audio']['mixer-numid-input']
     mic_volume = conf['audio']['input-volume'] + "%"
 
-    cmd = "HANDSFREE=" + str(int(handsfree_support)) + " BLUETOOTH_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume \
+    cmd = "BLUETOOTH_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume \
           + " MIXER_NUMID=" + mixer_numid + " MIC_MIXER_NUMID=" + mic_mixer_numid \
           + " MICROPHONE_VOLUME=" + mic_volume + " /usr/src/raspberrylink/raspilink-audio-start"
 

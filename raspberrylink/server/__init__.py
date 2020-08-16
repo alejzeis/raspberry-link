@@ -1,26 +1,22 @@
 from flask import Flask
 from logging import getLogger, INFO
 
-from raspberrylink.server import obd, communicator
+from raspberrylink.server import communicator
 from raspberrylink import config
 
 software_name = "RaspberryLink-Server"
-software_version = "1.0-git"
+software_version = "2.0-git"
 
 logger = getLogger("RL-Server-Main")
 logger.setLevel(INFO)
 
 logger.info("Starting " + software_name + " " + software_version)
 
-obdmanager = None
 audio_comm = None
 server_config = config.load_server_config()
 
 if server_config['audio'].getboolean("enabled"):
     audio_comm = communicator.AudioServiceCommunicator()
-
-if server_config['obd'].getboolean("enabled"):
-    obdmanager = obd.OBDManager()
 
 app = Flask(__name__)
 

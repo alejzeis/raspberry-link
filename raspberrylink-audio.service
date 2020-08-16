@@ -1,7 +1,7 @@
 [Unit]
 Description=RaspberryLink Bluetooth Audio Service
 After=bluetooth.service
-After=bluealsa.service
+After=pulseaudio.service
 After=ofono.service
 
 [Service]

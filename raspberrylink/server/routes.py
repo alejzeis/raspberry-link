@@ -3,7 +3,7 @@ from raspberrylink.server import app, software_name, software_version, server_co
 from raspberrylink.server import audio_comm
 from raspberrylink import util
 
-api_version_major = 3
+api_version_major = 4
 api_version_minor = 1
 
 
@@ -19,49 +19,31 @@ def apiver():
 def feature_request():
     audio_running = util.check_audio_running()
     obj = {
-        "vehicle": "Unknown",  # TODO: Vehicle information detection
         "server": software_name,
         "version": software_version,
-        "audio": audio_running and server_config['audio'].getboolean("enabled"),
-        "handsfree": audio_running and server_config['audio'].getboolean("handsfree-enabled"),
-        "camera": server_config['camera'].getboolean("enabled"),
-        "cameraAddress": server_config['camera']['address'],
-        "cameraPort": int(server_config['camera']['port']),
-        "obd": server_config['obd'].getboolean("enabled")
+        "audio": audio_running
     }
     return jsonify(obj)
 
 
 @app.route('/checkin')
 def checkin():
-    obd_support = server_config['obd'].getboolean("enabled")
-    audio_support = util.check_audio_running() and server_config['audio'].getboolean("enabled")
+    audio_support = util.check_audio_running()
     res_obj = {
-        "coolant": 0,
-        "oil": 0,
-        "mpg": 0,
-        "distance_mil": 0,
-        "current_dtc": 0,
-        "dtc": {},
-        "load": 0,
         "audio": {
             "connected": False,
             "signal_quality": 0,
-            "name": "Unknown"
+            "name": "Unknown",
+            "artist": "",
+            "title": ""
         },
         "calls": {
         }
     }
 
-    if obd_support:
-        # TODO: OBD Information
-        pass
-
     if audio_support:
         stats = util.get_current_audio_info()
         res_obj['audio']['connected'], res_obj['audio']['signal_quality'], res_obj['audio']['name'] = stats[slice(3)]
-
-    if audio_support and server_config['audio'].getboolean("handsfree-enabled"):
         res_obj['calls'] = audio_comm.active_calls
 
     return jsonify(res_obj)
@@ -95,3 +77,23 @@ def hangup_call():
         return "", 204
     else:
         return "Failed to hangup call", 500
+
+
+@app.route('/playback/back')
+def music_back():
+    pass
+
+
+@app.route('/playback/play')
+def music_play():
+    pass
+
+
+@app.route('/playback/pause')
+def music_pause():
+    pass
+
+
+@app.route('/playback/skip')
+def music_skip():
+    pass
