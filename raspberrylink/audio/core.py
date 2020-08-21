@@ -74,7 +74,7 @@ class AudioManager:
         new_status = util.get_device_connected()
         if not self.device_connected and new_status[0]:
             # Save bluetooth address to try to automatically reconnect on next startup
-            f = open('/var/cache/bluetooth/reconnect_device', 'w')
+            f = open('/var/cache/raspberrylink_last-device', 'w')
             f.write(new_status[1])
             f.close()
 
