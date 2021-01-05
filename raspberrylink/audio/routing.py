@@ -53,7 +53,7 @@ class PhysicalAudioRouter(AudioRouter):
 
     def on_start_call(self):
         if self.aplay_sco is None:
-            self.aplay_sco = Popen([self.bluealsa_aplay_exec, "00:00:00:00:00:00", "--profile-sco"],
+            self.aplay_sco = Popen([self.bluealsa_aplay_exec, "--profile-sco"],
                                    stdout=PIPE, stderr=PIPE, shell=False)
 
         # Terminate aplay and arecord if already running
@@ -70,6 +70,7 @@ class PhysicalAudioRouter(AudioRouter):
 
         # TODO: ensure it's the right device if multiple devices connected?
         device_id = util.get_device_connected()[1]  # Get Bluetooth device ID of current device connected
+        print("Piping mic input to device " + device_id)
         # Pipe Arecord output to Aplay to send over the SCO link
         self.arec_mic = Popen([self.arecord_exec, "-D", self.audio_manager.config['audio']['arecord-device'],
                                "-f", self.audio_manager.config['audio']['arecord-format'],

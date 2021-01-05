@@ -124,6 +124,7 @@ class AudioManager:
             while True:
                 # Check if the connection was closed
                 if self.active_socket_connection.fileno() == -1:
+                    logger.info("Socket connection closed.")
                     break
 
                 try:
