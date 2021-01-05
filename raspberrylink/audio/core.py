@@ -89,12 +89,15 @@ class AudioManager:
         new_status = util.get_device_connected()
         if not self.device_connected and new_status[0]:
             self.router.on_start_media_playback()
+            self.handsfree_mgr.on_device_connected(new_status[1])
+
             # Save bluetooth address to try to automatically reconnect on next startup
             f = open('/var/cache/bluetooth/reconnect_device', 'w')
             f.write(new_status[1])
             f.close()
         elif self.device_connected and not new_status[0]:
             self.router.on_stop_media_playback()
+            self.handsfree_mgr.on_device_disconnected(new_status[1])
             if self.call_support:  # Stop call audio routing if supported
                 # Reset call audio routing variable since we don't have a device connected anymore
                 self.call_audio_routing_begun = False
@@ -163,10 +166,10 @@ def bootstrap():
     handsfree_support = conf['audio'].getboolean("handsfree-enabled")
     name = conf['audio']['bt-name']
     adapter_address = conf['audio']['bt-adapter-address']
-    volume = conf['audio']['output-volume'] + "%"
+    volume = conf['audio']['physical-output-volume'] + "%"
     mixer_numid = conf['audio']['mixer-numid-output']
     mic_mixer_numid = conf['audio']['mixer-numid-input']
-    mic_volume = conf['audio']['input-volume'] + "%"
+    mic_volume = conf['audio']['physical-input-volume'] + "%"
 
     cmd = "HANDSFREE=" + str(int(handsfree_support)) + " BLUETOOTH_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume \
           + " MIXER_NUMID=" + mixer_numid + " MIC_MIXER_NUMID=" + mic_mixer_numid \

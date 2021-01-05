@@ -2,10 +2,17 @@ from time import sleep
 import dbus
 import dbus.mainloop.glib
 import logging
+import subprocess
 
 
 class DummyHandsfreeManager:
     def __init__(self):
+        pass
+
+    def on_device_connected(self, address):
+        pass
+
+    def on_device_disconnected(self, address):
         pass
 
     def answer_call(self, path):
@@ -17,6 +24,21 @@ class DummyHandsfreeManager:
     def poll(self):
         pass
 
+    def dial_call(self, path):
+        pass
+
+    def music_play(self):
+        pass
+
+    def music_pause(self):
+        pass
+
+    def music_skip(self):
+        pass
+
+    def music_back(self):
+        pass
+
 
 class HandsfreeManager(DummyHandsfreeManager):
     bus = None
@@ -24,6 +46,7 @@ class HandsfreeManager(DummyHandsfreeManager):
     modems = None
 
     audio_manager = None
+    bluez_mediaplayer = None
 
     logger = logging.getLogger("RL-HandsfreeManager")
 
@@ -37,11 +60,51 @@ class HandsfreeManager(DummyHandsfreeManager):
 
         self.bus = dbus.SystemBus()
         self.manager = dbus.Interface(self.bus.get_object('org.ofono', '/'), 'org.ofono.Manager')
+        self.bus.add_signal_receiver(
+            self._on_dbus_property_changed,
+            bus_name='org.bluez',
+            signal_name='PropertiesChanged',
+            dbus_interface='org.freedesktop.DBus.Properties')
 
         self.modems = self.manager.GetModems()
 
         for modem, props in self.modems:
             self.logger.info("Auto-detected Previous Modem: " + str(modem))
+
+    def _on_dbus_property_changed(self, interface, changed, invalidated):
+        if interface != 'org.bluez.MediaPlayer1':
+            return
+        for prop, value in changed.items():
+            if prop == 'Status':
+                self.audio_manager.socket_send_queue.put(("PLAYBACK-STATUS~" + str(value)).encode("UTF-8"))
+            elif prop == 'Track':
+                self.audio_manager.socket_send_queue.put(("PLAYBACK-INFO~" + value.get('Title', '')
+                                                          + "~" + value.get('Artist', '') + "~"
+                                                          + value.get('Album', '')).encode("UTF-8"))
+
+    def _set_bluealsa_volume(self, type, numid, value):
+        if subprocess.run(['amixer', '-D', 'bluealsa', 'cset', 'numid=' + str(numid), value + "%"]).returncode != 0:
+            self.logger.warning("Nonzero exit code while setting "+ type +" volume")
+
+    def on_device_connected(self, address):
+        # Set the A2DP and SCO volumes
+        self._set_bluealsa_volume("A2DP", 2, self.audio_manager.config['audio']['a2dp-volume'])
+        self._set_bluealsa_volume("SCO playback", 6, self.audio_manager.config['audio']['sco-volume-send'])
+        self._set_bluealsa_volume("SCO capture", 4, self.audio_manager.config['audio']['sco-volume-receive'])
+
+        # Obtain MediaPlayer interface from DBUS so we can get track information
+        obj = self.bus.get_object('org.bluez', "/")
+        mgr = dbus.Interface(obj, 'org.freedesktop.DBus.ObjectManager')
+        for path, ifaces in mgr.GetManagedObjects().items():
+            if 'org.bluez.MediaPlayer1' in ifaces:
+                self.bluez_mediaplayer = dbus.Interface(
+                    self.bus.get_object('org.bluez', path),
+                    'org.bluez.MediaPlayer1')
+        if not self.bluez_mediaplayer:
+            self.logger.warning("Failed to find MediaPlayer Dbus interface for BT device: " + address)
+
+    def on_device_disconnected(self, address):
+        self.bluez_mediaplayer = None
 
     def poll(self):
         self.modems = self.manager.GetModems()  # Update list in case of new modems from newly-paired devices
@@ -93,3 +156,20 @@ class HandsfreeManager(DummyHandsfreeManager):
             return True
         else:
             return False
+
+    def music_play(self):
+        if self.bluez_mediaplayer is not None:
+            self.bluez_mediaplayer.Play()
+
+    def music_pause(self):
+        if self.bluez_mediaplayer is not None:
+            self.bluez_mediaplayer.Pause()
+
+    def music_skip(self):
+        if self.bluez_mediaplayer is not None:
+            self.bluez_mediaplayer.Next()
+
+    def music_back(self):
+        if self.bluez_mediaplayer is not None:
+            self.bluez_mediaplayer.Previous()
+

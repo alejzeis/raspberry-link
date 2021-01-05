@@ -30,13 +30,22 @@ bt-adapter-address=00:00:00:00:00:00
 ; This allows calls to be placed and recieved over the bluetooth connection
 ; NOTICE: BlueALSA MUST be compiled with the --enable-ofono option, and Ofono must be installed and running
 handsfree-enabled=no
+
 ; Name of the Raspberry Pi that will show up when other devices discover and pair to the Pi
 bt-name=RaspberryLink
 
-; Percentage from 1-100 (don't include percent sign) to set the output volume of the Pi to.
-output-volume=75
-; Percentage from 1-100 (don't include percent sign) to set the input volume to. (ignore if handsfree is disabled)
-input-volume=100
+; Percentage from 1-100 (don't include percent sign) to set the actual physical output and input volume of the Pi to
+physical-output-volume=75
+physical-input-volume=100
+
+; Percentage from 1-100 (don't inclue percent sign) to set the volume of A2DP and SCO playback
+; A2DP is used for media and music from the phone, while SCO is strictly for any type of call (phone calls, video calls, VoIP, etc.)
+; A2DP is set to 20 here because it's super loud at 100 for some reason. Feel free to tweak.
+; SCO Receive volume means the volume from people in the call, whereas send volume is the volume of the user sending their voice to the call.
+a2dp-volume=20
+sco-volume-recieve=100
+sco-volume-send=100
+
 ; Numid for the Audio Playback device (You can find this using "amixer controls", see wiki for more information)
 ; Usually this won't need to be changed unless you are using a USB Sound device.
 ; For more information on how to make sure audio goes through the onboard analog port, or using a USB Sound device, see the wiki.
@@ -61,11 +70,6 @@ bluealsa-aplay-exec=/usr/bin/bluealsa-aplay
 aplay-exec=/usr/bin/aplay
 ; Location of the arecord (ALSA) executable
 arecord-exec=/usr/bin/arecord
-
-
-[obd]
-; Enable OBD (On-board diagnostics support)
-enabled=no
 """
 
 default_agent_config = """

@@ -11,6 +11,12 @@ class AudioServiceCommunicator:
     logger = logging.getLogger("AudioServiceCommunicator")
 
     active_calls = {}
+    track_data = {
+        "status": "N/A",
+        "title": "Unknown",
+        "artist": "N/A",
+        "album": "N/A"
+    }
 
     def __init__(self, socket_file="/run/raspberrylink_audio.socket"):
         self.logger.setLevel(logging.DEBUG)
@@ -62,5 +68,11 @@ class AudioServiceCommunicator:
                     }
 
                 self.active_calls = active_calls
+            elif data[0] == "PLAYBACK-STATUS":
+                self.track_data['status'] = data[1]
+            elif data[0] == "PLAYBACK-INFO":
+                self.track_data['title'] = data[1]
+                self.track_data['artist'] = data[2]
+                self.track_data['album'] = data[3]
             else:
                 self.logger.debug("Unknown message from RaspberryLink Audio process " + str(data))
