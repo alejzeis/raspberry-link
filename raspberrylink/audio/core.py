@@ -138,11 +138,14 @@ class AudioManager:
                         if data[0] == "CALL-ANSWER":
                             # Answer the specified call
                             self.handsfree_mgr.answer_call(data[1])
-                            pass
                         elif data[0] == "CALL-HANGUP":
                             # Hangup the specified call
                             self.handsfree_mgr.hangup_call(data[1])
-                            pass
+                        elif data[0] == "MEDIA-PLAY":
+                            self.handsfree_mgr.music_play()
+                        elif data[0] == "MEDIA-PAUSE":
+                            self.handsfree_mgr.music_pause()
+
                 except BlockingIOError:
                     pass
 
@@ -170,10 +173,16 @@ def bootstrap():
     mixer_numid = conf['audio']['mixer-numid-output']
     mic_mixer_numid = conf['audio']['mixer-numid-input']
     mic_volume = conf['audio']['physical-input-volume'] + "%"
+    a2dp_volume = conf['audio']['a2dp-volume'] + "%"
+    sco_volume_send = conf['audio']['sco-volume-send'] + "%"
+    sco_volume_recv = conf['audio']['sco-volume-recv'] + "%"
 
     cmd = "HANDSFREE=" + str(int(handsfree_support)) + " BLUETOOTH_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume \
           + " MIXER_NUMID=" + mixer_numid + " MIC_MIXER_NUMID=" + mic_mixer_numid \
-          + " MICROPHONE_VOLUME=" + mic_volume + " /usr/src/raspberrylink/raspilink-audio-start"
+          + " MICROPHONE_VOLUME=" + mic_volume + \
+          + " A2DP_VOLUME=" + a2dp_volume + " SCO_VOLUME_SEND=" + sco_volume_send + \
+          + " SCO_VOLUME_RECV=" + sco_volume_recv + \
+          " /usr/src/raspberrylink/raspilink-audio-start"
 
     if adapter_address != "00:00:00:00:00:00":
         cmd = "MULTIPLE_ADAPTERS=1 BT_ADAPTER_ADDR=" + adapter_address + " " + cmd

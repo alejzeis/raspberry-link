@@ -61,6 +61,11 @@ class HandsfreeManager(DummyHandsfreeManager):
         self.bus = dbus.SystemBus()
         self.manager = dbus.Interface(self.bus.get_object('org.ofono', '/'), 'org.ofono.Manager')
         self.bus.add_signal_receiver(
+            self._on_pcm_added,
+            bus_name='org.bluealsa',
+            signal_name='PCMAdded'
+        )
+        self.bus.add_signal_receiver(
             self._on_dbus_property_changed,
             bus_name='org.bluez',
             signal_name='PropertiesChanged',
@@ -71,6 +76,7 @@ class HandsfreeManager(DummyHandsfreeManager):
         for modem, props in self.modems:
             self.logger.info("Auto-detected Previous Modem: " + str(modem))
 
+    # Callback for DBus to detect when the current track information changes
     def _on_dbus_property_changed(self, interface, changed, invalidated):
         if interface != 'org.bluez.MediaPlayer1':
             return
@@ -86,16 +92,14 @@ class HandsfreeManager(DummyHandsfreeManager):
         if subprocess.run(['amixer', '-D', 'bluealsa', 'cset', 'numid=' + str(numid), value + "%"]).returncode != 0:
             self.logger.warning("Nonzero exit code while setting "+ type +" volume")
 
-    def on_device_connected(self, address):
-        # wait 2 seconds since devices will be detected before bluealsa and ofono have initialized them properly
-        # otherwise, the following code will fail
-        sleep(2)
-
+    # Callback for DBus to detect when to set the volumes for A2DP and SCO
+    def _on_pcm_added(self, address):
         # Set the A2DP and SCO volumes
         self._set_bluealsa_volume("A2DP", 2, self.audio_manager.config['audio']['a2dp-volume'])
         self._set_bluealsa_volume("SCO playback", 6, self.audio_manager.config['audio']['sco-volume-send'])
         self._set_bluealsa_volume("SCO capture", 4, self.audio_manager.config['audio']['sco-volume-receive'])
 
+    def on_device_connected(self, address):
         # Obtain MediaPlayer interface from DBUS so we can get track information
         obj = self.bus.get_object('org.bluez', "/")
         mgr = dbus.Interface(obj, 'org.freedesktop.DBus.ObjectManager')

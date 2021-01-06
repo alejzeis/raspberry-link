@@ -48,6 +48,12 @@ class AudioServiceCommunicator:
     def hangup_call(self, path):
         self.sock.send(("CALL-HANGUP~" + path).encode("UTF-8"))
 
+    def music_play(self):
+        self.sock.send("MEDIA-PLAY~".encode("UTF-8"))
+
+    def music_pause(self):
+        self.sock.send("MEDIA-PAUSE~".encode("UTF-8"))
+
     def _process_recv(self):
         self.logger.debug("Listening for data from RaspberryLink Audio process")
         while True:

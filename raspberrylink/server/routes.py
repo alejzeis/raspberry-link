@@ -4,7 +4,7 @@ from raspberrylink.server import audio_comm
 from raspberrylink import util
 
 api_version_major = 4
-api_version_minor = 1
+api_version_minor = 2
 
 
 @app.route('/apiver')
@@ -84,3 +84,21 @@ def hangup_call():
         return "", 204
     else:
         return "Failed to hangup call", 500
+
+
+@app.route('/media/play')
+def music_play():
+    if not util.check_audio_running():
+        return "Audio Service is offline", 500
+
+    audio_comm.music_play()
+    return "", 204
+
+
+@app.route('/media/pause')
+def music_pause():
+    if not util.check_audio_running():
+        return "Audio Service is offline", 500
+
+    audio_comm.music_pause()
+    return "", 204

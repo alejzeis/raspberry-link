@@ -1,7 +1,7 @@
 from flask import Flask
 from logging import getLogger, INFO
 
-from raspberrylink.server import obd, communicator
+from raspberrylink.server import communicator
 from raspberrylink import config
 
 software_name = "RaspberryLink-Server"
