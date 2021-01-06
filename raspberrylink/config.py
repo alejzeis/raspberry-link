@@ -43,7 +43,7 @@ physical-input-volume=100
 ; A2DP is set to 20 here because it's super loud at 100 for some reason. Feel free to tweak.
 ; SCO Receive volume means the volume from people in the call, whereas send volume is the volume of the user sending their voice to the call.
 a2dp-volume=20
-sco-volume-recieve=100
+sco-volume-receive=100
 sco-volume-send=100
 
 ; Numid for the Audio Playback device (You can find this using "amixer controls", see wiki for more information)

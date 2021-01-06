@@ -87,6 +87,10 @@ class HandsfreeManager(DummyHandsfreeManager):
             self.logger.warning("Nonzero exit code while setting "+ type +" volume")
 
     def on_device_connected(self, address):
+        # wait 2 seconds since devices will be detected before bluealsa and ofono have initialized them properly
+        # otherwise, the following code will fail
+        sleep(2)
+
         # Set the A2DP and SCO volumes
         self._set_bluealsa_volume("A2DP", 2, self.audio_manager.config['audio']['a2dp-volume'])
         self._set_bluealsa_volume("SCO playback", 6, self.audio_manager.config['audio']['sco-volume-send'])
