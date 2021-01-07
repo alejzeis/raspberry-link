@@ -9,6 +9,9 @@ class DummyHandsfreeManager:
     def __init__(self):
         pass
 
+    def on_dbus_bluez_property_changed(self, interface, changed, invalidated):
+        pass
+
     def on_device_connected(self, name, address, signal_strength):
         pass
 
@@ -73,13 +76,6 @@ class HandsfreeManager(DummyHandsfreeManager):
             bus_name='org.bluealsa',
             signal_name='PCMAdded'
         )
-        self.bus.add_signal_receiver(
-            self._on_dbus_mediaplayer_property_changed,
-            bus_name='org.bluez',
-            signal_name='PropertiesChanged',
-            dbus_interface='org.bluez.MediaPlayer1',
-            path_keyword='path'
-        )
 
         self.modems = self.manager.GetModems()
 
@@ -87,15 +83,16 @@ class HandsfreeManager(DummyHandsfreeManager):
             self.logger.info("Auto-detected Previous Modem: " + str(modem))
 
     # Callback for DBus to detect when the current track information changes
-    def _on_dbus_mediaplayer_property_changed(self, property_name, value, path):
-        player = dbus.Interface(self.bus.get_object("org.bluez", path), "org.bluez.MediaPlayer1")
-        properties = player.GetProperties()
-
-        if property_name == "Status" or property_name == "Track":
-            self.track_info["status"] = properties["Status"]
-            self.track_info["title"] = properties["Track"].get('Title', '')
-            self.track_info["artist"] = properties["Track"].get('Artist', '')
-            self.track_info["album"] = properties["Track"].get('Album', '')
+    def on_dbus_bluez_property_changed(self, interface, changed, invalidated):
+        if interface != 'org.bluez.MediaPlayer1':
+            return
+        for prop, value in changed.items():
+            if prop == 'Status':
+                self.track_info['status'] = str(value)
+            elif prop == 'Track':
+                self.track_info["title"] = value.get("Title", "")
+                self.track_info["artist"] = value.get("Artist", "")
+                self.track_info["album"] = value.get("Album", "")
 
     def _set_bluealsa_volume(self, type, numid, value):
         if subprocess.run(['amixer', '-D', 'bluealsa', 'cset', 'numid=' + str(numid), value + "%"], capture_output=True).returncode != 0:

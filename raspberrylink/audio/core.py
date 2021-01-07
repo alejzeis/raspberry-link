@@ -44,7 +44,7 @@ class AudioManager:
             self._on_dbus_device_property_changed,
             bus_name='org.bluez',
             signal_name='PropertiesChanged',
-            dbus_interface='org.bluez.Device1',
+            dbus_interface='org.freedesktop.DBus.Properties',
             path_keyword='path'
         )
 
@@ -63,12 +63,12 @@ class AudioManager:
             self.handsfree_mgr.poll()
             sleep(1)
 
-    def _on_dbus_device_property_changed(self, property_name, value, path):
-        device = dbus.Interface(self.bus.get_object("org.bluez", path), "org.bluez.Device")
-        properties = device.GetProperties()
+    def _on_dbus_device_property_changed(self, interface, changed, invalidated, path):
+        if interface == "org.bluez.Device1":
+            device = dbus.Interface(self.bus.get_object("org.bluez", path), "org.bluez.Device1")
+            properties = device.GetProperties()
 
-        if property_name == "Connected":
-            if value:  # True: device connected
+            if properties["Connected"]:
                 logger.info("Device connected: " + properties['Name'] + " with address " + properties['Address'])
                 self.connected_device = {
                     "connected": True,
@@ -84,7 +84,7 @@ class AudioManager:
                 f = open('/var/cache/raspberrylink-last-device', 'w')
                 f.write(properties['Address'])
                 f.close()
-            else:  # False: device disconnected
+            else:
                 logger.info("Device disconnected: " + properties['Name'] + " with address " + properties['Address'])
                 self.connected_device = {
                     "connected": False,
@@ -97,6 +97,8 @@ class AudioManager:
                 self.handsfree_mgr.on_device_disconnected(properties['Name'], properties['Address'])
                 self.call_audio_routing_begun = False
                 self.router.on_end_call()
+
+        self.handsfree_mgr.on_dbus_bluez_property_changed(interface, changed, invalidated)
 
     # Called by the Handsfree manager when there is an active call
     def on_call_active(self):
