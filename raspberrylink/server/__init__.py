@@ -21,10 +21,12 @@ from raspberrylink.server import routes
 def run_server():
     from waitress import serve
     from time import sleep
+    from raspberrylink.audio import core as audio_core
+
     host, port = server_config['server']['interface'], server_config['server']['port']
 
     sleep(2)
-    audio_manager.attempt_reconnect(server_config)
+    audio_core.attempt_reconnect(server_config)
 
     logger.info("Starting WSGI server on " + host + ":" + port)
 
