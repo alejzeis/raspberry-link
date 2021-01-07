@@ -1,6 +1,5 @@
 from flask import jsonify, request
-from raspberrylink.server import app, software_name, software_version, server_config
-from raspberrylink import util
+from raspberrylink.server import app, software_name, software_version, server_config, audio_manager
 
 api_version_major = 5
 api_version_minor = 1
@@ -27,35 +26,26 @@ def feature_request():
 @app.route('/checkin')
 def checkin():
     audio_support = server_config['audio'].getboolean("enabled")
-    res_obj = {
-        "audio": {
-            "connected": False,
-            "signal_quality": 0,
-            "name": "Unknown",
-            "music": {}
-        },
-        "calls": {
-        }
-    }
+    res_obj = {}
 
     if audio_support:
-        # TODO: Get audio information from DBus
-        stats = util.get_current_audio_info()
-        res_obj['audio']['connected'], res_obj['audio']['signal_quality'], res_obj['audio']['name'] = stats[slice(3)]
+        res_obj["device"] = audio_manager.connected_device
+        res_obj["media"] = audio_manager.handsfree_mgr.track_info
+        res_obj["calls"] = audio_manager.handsfree_mgr.calls
 
     return jsonify(res_obj)
 
 
 @app.route('/calls/answer')
 def answer_call():
-    if not (util.check_audio_running() and server_config['audio'].getboolean("handsfree-enabled")):
-        return "Handsfree support not enabled or Audio Service is offline", 500
+    if not server_config['audio'].getboolean("enabled"):
+        return "Audio Service is offline", 500
 
     path = request.args.get("path", None)
     if path is None:
         return "Required argument \"path\" missing", 400
 
-    if audio_comm.answer_call(path):
+    if audio_manager.handsfree_mgr.answer_call(path):
         return "", 204
     else:
         return "Failed to answer call", 500
@@ -63,14 +53,14 @@ def answer_call():
 
 @app.route('/calls/hangup')
 def hangup_call():
-    if not (util.check_audio_running() and server_config['audio'].getboolean("handsfree-enabled")):
-        return "Handsfree support not enabled or Audio Service is offline", 500
+    if not server_config['audio'].getboolean("enabled"):
+        return "Audio Service is offline", 500
 
     path = request.args.get("path", None)
     if path is None:
         return "Required argument \"path\" missing", 400
 
-    if audio_comm.hangup_call(path):
+    if audio_manager.handsfree_mgr.hangup_call(path):
         return "", 204
     else:
         return "Failed to hangup call", 500
@@ -78,17 +68,17 @@ def hangup_call():
 
 @app.route('/media/play')
 def music_play():
-    if not util.check_audio_running():
+    if not server_config['audio'].getboolean("enabled"):
         return "Audio Service is offline", 500
 
-    audio_comm.music_play()
+    audio_manager.handsfree_mgr.music_pause()
     return "", 204
 
 
 @app.route('/media/pause')
 def music_pause():
-    if not util.check_audio_running():
+    if not server_config['audio'].getboolean("enabled"):
         return "Audio Service is offline", 500
 
-    audio_comm.music_pause()
+    audio_manager.handsfree_mgr.music_pause()
     return "", 204

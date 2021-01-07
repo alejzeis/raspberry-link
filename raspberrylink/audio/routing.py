@@ -1,5 +1,4 @@
 from subprocess import Popen, PIPE
-from raspberrylink import util
 
 
 class AudioRouter:
@@ -68,8 +67,7 @@ class PhysicalAudioRouter(AudioRouter):
 
             self.arec_mic = None
 
-        # TODO: ensure it's the right device if multiple devices connected?
-        device_id = util.get_device_connected()[1]  # Get Bluetooth device ID of current device connected
+        device_id = self.audio_manager.connected_device['address']
         print("Piping mic input to device " + device_id)
         # Pipe Arecord output to Aplay to send over the SCO link
         self.arec_mic = Popen([self.arecord_exec, "-D", self.audio_manager.config['audio']['arecord-device'],

@@ -1,5 +1,6 @@
 [Unit]
 Description=RaspberryLink Server
+After=dbus-broker.service
 After=bluetooth.service
 After=ofono.service
 
