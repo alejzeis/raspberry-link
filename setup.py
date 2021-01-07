@@ -5,25 +5,23 @@ __author__ = "jython234"
 
 setup(
   name='raspberrylink',
-  version='1.0-git',
-  description='Raspberrylink Smart-car system for Raspberry Pi',
+  version='2.0-git',
+  description='Raspberry Pi based handsfree audio server for automotive settings',
   author=__author__,
   author_email='jython234@gmail.com',
   license='MPL-2.0',
   url='https://github.com/jython234/raspberry-link',
   packages=['raspberrylink', 'raspberrylink.server', 'raspberrylink.audio'],
-  install_requires=['flask', 'obd', 'waitress', 'dbus-python', 'PyGObject'],
+  install_requires=['flask', 'waitress', 'dbus-python', 'PyGObject'],
   entry_points={
     'console_scripts': [
       'raspilink-server=raspberrylink.server:run_server',
-      'raspilink-agent=raspberrylink.agent:run_agent',
-      'raspilink-audio=raspberrylink.audio.core:bootstrap'
+      'raspilink-agent=raspberrylink.agent:run_agent'
     ]
   },
   data_files=[
-    ('/usr/lib/systemd/system/', ['raspberrylink-agent.service', 'raspberrylink-audio.service',
-                                  'raspberrylink-server.service'],
+    ('/opt/raspberrylink', ['raspberrylink-agent.service', 'raspberrylink.service'],
      ),
-    ('/usr/src/raspberrylink', ['bt-audio/raspilink-audio-start', 'bt-audio/raspilink-bt-agent.py'])
+    ('/opt/raspberrylink', ['bt-audio/raspilink-bt-init', 'bt-audio/raspilink-bt-agent.py'])
   ]
 )

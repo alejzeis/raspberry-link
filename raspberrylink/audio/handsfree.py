@@ -90,7 +90,7 @@ class HandsfreeManager(DummyHandsfreeManager):
 
     def _set_bluealsa_volume(self, type, numid, value):
         if subprocess.run(['amixer', '-D', 'bluealsa', 'cset', 'numid=' + str(numid), value + "%"]).returncode != 0:
-            self.logger.warning("Nonzero exit code while setting "+ type +" volume")
+            self.logger.warning("Nonzero exit code while setting " + type + " volume")
 
     # Callback for DBus to detect when to set the volumes for A2DP and SCO
     def _on_pcm_added(self, address):

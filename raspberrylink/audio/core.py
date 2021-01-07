@@ -182,7 +182,7 @@ def bootstrap():
           + " MICROPHONE_VOLUME=" + mic_volume \
           + " A2DP_VOLUME=" + a2dp_volume + " SCO_VOLUME_SEND=" + sco_volume_send \
           + " SCO_VOLUME_RECV=" + sco_volume_recv \
-          + " /usr/src/raspberrylink/raspilink-audio-start"
+          + " /opt/raspberrylink/raspilink-bt-init"
 
     if adapter_address != "00:00:00:00:00:00":
         cmd = "MULTIPLE_ADAPTERS=1 BT_ADAPTER_ADDR=" + adapter_address + " " + cmd

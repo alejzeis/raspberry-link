@@ -1,12 +1,11 @@
 [Unit]
-Description=RaspberryLink Bluetooth Audio Service
+Description=RaspberryLink Server
 After=bluetooth.service
-After=bluealsa.service
 After=ofono.service
 
 [Service]
 Type=simple
-ExecStart=raspilink-audio
+ExecStart=raspilink-server
 
 [Install]
 WantedBy=multi-user.target

@@ -6,24 +6,6 @@ import logging
 logger = logging.getLogger("RL-Util")
 
 
-def check_audio_running():
-    # Check to see if the raspberrylink-audio service has ran (or if it even exists)
-    # A != 0 exit code implies something is wrong or the service doesn't exist, thus no bluetooth audio support for us
-    return run("systemctl status raspberrylink-audio", stdout=PIPE, stderr=PIPE, shell=True).returncode == 0
-
-
-def get_device_connected():
-    con_cmd = run("hcitool con", stdout=PIPE, stderr=PIPE, shell=True)
-    if con_cmd.returncode != 0:
-        return False, ""
-
-    output = con_cmd.stdout.decode("UTF-8")
-    if output.strip() == "Connections:":
-        return False, ""
-    else:
-        return True, re.search("((?:[A-F0-9]{2}\\:){5}\\S{2})", output).group(0)
-
-
 def get_current_audio_info():
     device_connected =  get_device_connected()
     if not device_connected[0]:

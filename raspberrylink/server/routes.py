@@ -1,10 +1,9 @@
 from flask import jsonify, request
 from raspberrylink.server import app, software_name, software_version, server_config
-from raspberrylink.server import audio_comm
 from raspberrylink import util
 
-api_version_major = 4
-api_version_minor = 2
+api_version_major = 5
+api_version_minor = 1
 
 
 @app.route('/apiver')
@@ -17,23 +16,17 @@ def apiver():
 
 @app.route('/feature_request')
 def feature_request():
-    audio_running = util.check_audio_running()
     obj = {
-        "vehicle": "Unknown",  # TODO: Vehicle information detection
         "server": software_name,
         "version": software_version,
-        "audio": audio_running and server_config['audio'].getboolean("enabled"),
-        "handsfree": audio_running and server_config['audio'].getboolean("handsfree-enabled"),
-        "camera": server_config['camera'].getboolean("enabled"),
-        "cameraAddress": server_config['camera']['address'],
-        "cameraPort": int(server_config['camera']['port']),
+        "audio": server_config['audio'].getboolean("enabled")
     }
     return jsonify(obj)
 
 
 @app.route('/checkin')
 def checkin():
-    audio_support = util.check_audio_running() and server_config['audio'].getboolean("enabled")
+    audio_support = server_config['audio'].getboolean("enabled")
     res_obj = {
         "audio": {
             "connected": False,
@@ -46,12 +39,9 @@ def checkin():
     }
 
     if audio_support:
+        # TODO: Get audio information from DBus
         stats = util.get_current_audio_info()
         res_obj['audio']['connected'], res_obj['audio']['signal_quality'], res_obj['audio']['name'] = stats[slice(3)]
-
-    if audio_support and server_config['audio'].getboolean("handsfree-enabled"):
-        res_obj['calls'] = audio_comm.active_calls
-        res_obj['music'] = audio_comm.track_data
 
     return jsonify(res_obj)
 
