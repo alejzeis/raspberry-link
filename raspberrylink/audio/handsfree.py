@@ -98,7 +98,7 @@ class HandsfreeManager(DummyHandsfreeManager):
             self.track_info["album"] = properties["Track"].get('Album', '')
 
     def _set_bluealsa_volume(self, type, numid, value):
-        if subprocess.run(['amixer', '-D', 'bluealsa', 'cset', 'numid=' + str(numid), value + "%"]).returncode != 0:
+        if subprocess.run(['amixer', '-D', 'bluealsa', 'cset', 'numid=' + str(numid), value + "%"], capture_output=True).returncode != 0:
             self.logger.warning("Nonzero exit code while setting " + type + " volume")
 
     # Callback for DBus to detect when to set the volumes for A2DP and SCO
