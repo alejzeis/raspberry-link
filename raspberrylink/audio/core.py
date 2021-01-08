@@ -87,7 +87,7 @@ class AudioManager:
 
                 # Save bluetooth address to try to automatically reconnect on next startup
                 f = open('/var/cache/raspberrylink-last-device', 'w')
-                f.write(address)
+                f.write(path)
                 f.close()
             else:
                 name = properties.Get("org.bluez.Device1", "Name")
@@ -120,16 +120,24 @@ class AudioManager:
         self.router.on_start_call()
         self.call_audio_routing_begun = True
 
+    def attempt_reconnect(self, conf):
+        f = open("/var/cache/raspberrylink-last-device", 'r')
+        device_path = f.readline()
+        f.close()
 
-def attempt_reconnect(conf):
-    adapter_address = conf["audio"]["bt-adapter-address"]
+        device = self.bus.get_object('org.bluez', device_path)
+        iface_h = dbus.Interface(device, 'org.bluez.Device1')
 
-    if adapter_address != "00:00:00:00:00:00":
-        prefix = "MULTIPLE_ADAPTERS=1 BT_ADAPTER_ADDR=" + adapter_address
-    else:
-        prefix = "MULTIPLE_ADAPTERS=0 "
-
-    run(prefix + " /opt/raspberrylink/raspilink-bt-reconnect", shell=True)
+        logger.info("Attempting to connect to previously-connected device: " + device_path)
+        connected = iface_h.IsConnected()
+        if not connected:
+            try:
+                iface_h.Connect()
+                logger.info("Successfully connected to device " + device_path)
+            except:
+                logger.warning("Failed to connect to previously-connected device: " + device_path)
+        else:
+            logger.info("Already connected to device")
 
 
 # Entry function for raspilink-audio

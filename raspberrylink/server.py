@@ -19,7 +19,7 @@ def run_server(logger, audio_manager, server_config):
     host, port = server_config['server']['interface'], server_config['server']['port']
 
     sleep(2)
-    audio_core.attempt_reconnect(server_config)
+    audio_manager.attempt_reconnect(server_config)
 
     app = Flask(__name__)
 
