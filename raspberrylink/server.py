@@ -80,7 +80,7 @@ def run_server(logger, audio_manager, server_config):
         if not server_config['audio'].getboolean("enabled"):
             return "Audio Service is offline", 500
 
-        audio_manager.handsfree_mgr.music_pause()
+        audio_manager.handsfree_mgr.music_play()
         return "", 204
 
     @app.route('/media/pause')
@@ -89,6 +89,22 @@ def run_server(logger, audio_manager, server_config):
             return "Audio Service is offline", 500
 
         audio_manager.handsfree_mgr.music_pause()
+        return "", 204
+
+    @app.route('/media/skip')
+    def music_skip():
+        if not server_config['audio'].getboolean("enabled"):
+            return "Audio Service is offline", 500
+
+        audio_manager.handsfree_mgr.music_skip()
+        return "", 204
+
+    @app.route('/media/back')
+    def music_back():
+        if not server_config['audio'].getboolean("enabled"):
+            return "Audio Service is offline", 500
+
+        audio_manager.handsfree_mgr.music_back()
         return "", 204
 
     def waitress_serve():

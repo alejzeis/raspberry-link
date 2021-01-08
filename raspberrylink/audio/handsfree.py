@@ -120,6 +120,9 @@ class HandsfreeManager(DummyHandsfreeManager):
 
     # Callback for DBus to detect when to set the volumes for A2DP and SCO
     def _on_bluealsa_pcm_added(self, path, properties):
+        self.set_volumes()
+
+    def set_volumes(self):
         # Set the A2DP and SCO volumes
         self._set_bluealsa_volume("A2DP", 2, self.audio_manager.config['audio']['a2dp-volume'])
         self._set_bluealsa_volume("SCO playback", 6, self.audio_manager.config['audio']['sco-volume-send'])

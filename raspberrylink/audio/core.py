@@ -146,6 +146,7 @@ class AudioManager:
                 rssi = -1  # properties.Get("org.bluez.Device1", "RSSI")
 
                 self._on_device_connected(name, address, rssi)
+                self.handsfree_mgr.set_volumes()
             except:
                 logger.warning("Failed to connect to previously-connected device: " + device_path)
         else:
