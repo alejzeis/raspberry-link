@@ -23,7 +23,6 @@ setup(
     data_files=[
         ('/opt/raspberrylink', ['raspberrylink-agent.service', 'raspberrylink.service'],
          ),
-        ('/opt/raspberrylink', ['bluetooth-scripts/raspilink-bt-init', 'bluetooth-scripts/raspilink-bt-reconnect',
-                                'bluetooth-scripts/raspilink-bt-agent.py'])
+        ('/opt/raspberrylink', ['bluetooth-scripts/raspilink-bt-init', 'bluetooth-scripts/raspilink-bt-agent.py'])
     ]
 )

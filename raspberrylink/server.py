@@ -90,6 +90,7 @@ def run_server(logger, audio_manager, server_config):
 
         try:
             audio_manager.handsfree_mgr.hangup_all()
+            return "", 204
         except Exception as e:
             logger.error("Exception while hanging up on all calls, " + str(e))
             return "Failed to hangup all calls", 500

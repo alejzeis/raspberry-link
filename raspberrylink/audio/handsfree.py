@@ -155,21 +155,23 @@ class HandsfreeManager(DummyHandsfreeManager):
 
             calls = mgr.GetCalls()
 
+            # Due to polling we aren't able to catch when calls end up disconnecting, so we just overwrite the list
+            # each time.
+            currentcalls = {}
             for path, properties in calls:
                 state = properties['State']
                 name = properties['Name']
                 line_ident = properties['LineIdentification']
 
                 if state != "disconnected":
-                    self.calls[line_ident] = {
+                    currentcalls[line_ident] = {
                         "path": path,
                         "state": state,
                         "name": name,
                         "modem": modem
                     }
-                else:
-                    del self.calls[line_ident]
 
+            self.calls = currentcalls
             if len(self.calls) > 0:
                 self.audio_manager.on_call_active()
 
