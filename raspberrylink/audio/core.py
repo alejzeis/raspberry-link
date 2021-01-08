@@ -66,26 +66,33 @@ class AudioManager:
     def _on_dbus_device_property_changed(self, interface, changed, invalidated, path):
         if interface == "org.bluez.Device1":
             device = dbus.Interface(self.bus.get_object("org.bluez", path), "org.bluez.Device1")
-            properties = device.GetProperties()
+            properties = dbus.Interface(device, "org.freedesktop.DBus.Properties")
 
-            if properties["Connected"]:
-                logger.info("Device connected: " + properties['Name'] + " with address " + properties['Address'])
+            if properties.Get("org.bluez.Device1", "Connected"):
+                name = properties.Get("org.bluez.Device1", "Name")
+                address = properties.Get("org.bluez.Device1", "Address")
+                rssi = properties.Get("org.bluez.Device1", "RSSI")
+
+                logger.info("Device connected: " + name + " with address " + address)
                 self.connected_device = {
                     "connected": True,
-                    "name": properties['Name'],
-                    "address": properties['Address'],
-                    "signal_strength": properties['RSSI']
+                    "name": name,
+                    "address": address,
+                    "signal_strength": rssi
                 }
 
                 self.router.on_start_media_playback()
-                self.handsfree_mgr.on_device_connected(properties['Name'], properties['Address'], properties['RSSI'])
+                self.handsfree_mgr.on_device_connected(name, address, rssi)
 
                 # Save bluetooth address to try to automatically reconnect on next startup
                 f = open('/var/cache/raspberrylink-last-device', 'w')
-                f.write(properties['Address'])
+                f.write(address)
                 f.close()
             else:
-                logger.info("Device disconnected: " + properties['Name'] + " with address " + properties['Address'])
+                name = properties.Get("org.bluez.Device1", "Name")
+                address = properties.Get("org.bluez.Device1", "Address")
+
+                logger.info("Device disconnected: " + name + " with address " + address)
                 self.connected_device = {
                     "connected": False,
                     "name": "Unknown",
@@ -94,7 +101,7 @@ class AudioManager:
                 }
 
                 self.router.on_stop_media_playback()
-                self.handsfree_mgr.on_device_disconnected(properties['Name'], properties['Address'])
+                self.handsfree_mgr.on_device_disconnected(name, address)
                 self.call_audio_routing_begun = False
                 self.router.on_end_call()
 
