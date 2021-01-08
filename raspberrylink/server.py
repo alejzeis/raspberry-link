@@ -10,7 +10,7 @@ from raspberrylink.audio import core as audio_core
 software_name = "RaspberryLink-Server"
 software_version = "2.0-git"
 api_version_major = 5
-api_version_minor = 1
+api_version_minor = 2
 
 
 # This needs to be called after startup()
@@ -56,9 +56,13 @@ def run_server(logger, audio_manager, server_config):
         if path is None:
             return "Required argument \"path\" missing", 400
 
-        if audio_manager.handsfree_mgr.answer_call(path):
-            return "", 204
-        else:
+        try:
+            if audio_manager.handsfree_mgr.answer_call(path):
+                return "", 204
+            else:
+                return "That call wasn't found", 404
+        except Exception as e:
+            logger.error("Exception while answering " + path + ", " + str(e))
             return "Failed to answer call", 500
 
     @app.route('/calls/hangup')
@@ -70,10 +74,41 @@ def run_server(logger, audio_manager, server_config):
         if path is None:
             return "Required argument \"path\" missing", 400
 
-        if audio_manager.handsfree_mgr.hangup_call(path):
-            return "", 204
-        else:
+        try:
+            if audio_manager.handsfree_mgr.hangup_call(path):
+                return "", 204
+            else:
+                return "That call wasn't found", 404
+        except Exception as e:
+            logger.error("Exception while hanging up on " + path + ", " + str(e))
             return "Failed to hangup call", 500
+
+    @app.route('/calls/hangupall')
+    def hangup_all_calls():
+        if not server_config['audio'].getboolean("enabled"):
+            return "Audio Service is offline", 500
+
+        try:
+            audio_manager.handsfree_mgr.hangup_all()
+        except Exception as e:
+            logger.error("Exception while hanging up on all calls, " + str(e))
+            return "Failed to hangup all calls", 500
+
+    @app.route('/calls/dial')
+    def dial_call():
+        if not server_config['audio'].getboolean("enabled"):
+            return "Audio Service is offline", 500
+
+        number = request.args.get("number", None)
+        if number is None:
+            return "Required argument \"number\" missing", 400
+
+        try:
+            audio_manager.handsfree_mgr.dial_call(number)
+            return "", 204
+        except Exception as e:
+            logger.error("Exception while dialing number " + number + ", " + str(e))
+            return "Failed to dial number", 500
 
     @app.route('/media/play')
     def music_play():

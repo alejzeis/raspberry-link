@@ -24,10 +24,13 @@ class DummyHandsfreeManager:
     def hangup_call(self, path):
         pass
 
-    def poll(self):
+    def hangup_all(self):
         pass
 
-    def dial_call(self, path):
+    def dial_call(self, number):
+        pass
+
+    def poll(self):
         pass
 
     def music_play(self):
@@ -133,6 +136,13 @@ class HandsfreeManager(DummyHandsfreeManager):
 
     def on_device_disconnected(self, name, address):
         self.bluez_mediaplayer = None
+        self.calls = {}
+        self.track_info = {
+            "status": "Unknown",
+            "title": "Unknown",
+            "artist": "Unknown",
+            "album": "Unknown"
+        }
 
     def poll(self):
         self.modems = self.manager.GetModems()  # Update list in case of new modems from newly-paired devices
@@ -152,6 +162,7 @@ class HandsfreeManager(DummyHandsfreeManager):
 
                 if state != "disconnected":
                     self.calls[line_ident] = {
+                        "path": path,
                         "state": state,
                         "name": name,
                         "modem": modem
@@ -179,6 +190,16 @@ class HandsfreeManager(DummyHandsfreeManager):
             return True
         else:
             return False
+
+    def hangup_all(self):
+        vcm = dbus.Interface(self.bus.get_object("org.ofono", self.modems[0][0]), "org.ofono.VoiceCallManager")
+        vcm.HangupAll()
+        self.logger.info("Hungup on all calls for " + self.modems[0][0])
+
+    def dial_call(self, number):
+        vcm = dbus.Interface(self.bus.get_object("org.ofono", self.modems[0][0]), "org.ofono.VoiceCallManager")
+        vcm.Dial(number, "default")
+        self.logger.info("Dialed number " + number + " on " + self.modems[0][0])
 
     def music_play(self):
         if self.bluez_mediaplayer is not None:
