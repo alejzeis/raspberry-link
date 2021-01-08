@@ -12,7 +12,7 @@ setup(
     author_email='jython234@gmail.com',
     license='MPL-2.0',
     url='https://github.com/jython234/raspberry-link',
-    packages=['raspberrylink', 'raspberrylink.server', 'raspberrylink.audio'],
+    packages=['raspberrylink', 'raspberrylink.audio'],
     install_requires=['flask', 'waitress', 'dbus-python', 'PyGObject'],
     entry_points={
         'console_scripts': [

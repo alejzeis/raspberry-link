@@ -72,7 +72,7 @@ class AudioManager:
             if properties.Get("org.bluez.Device1", "Connected") and not self.connected_device["connected"]:
                 name = properties.Get("org.bluez.Device1", "Name")
                 address = properties.Get("org.bluez.Device1", "Address")
-                rssi = properties.Get("org.bluez.Device1", "RSSI")
+                rssi = -1  #properties.Get("org.bluez.Device1", "RSSI")
 
                 logger.info("Device connected: " + name + " with address " + address)
                 self.connected_device = {

@@ -94,9 +94,29 @@ class HandsfreeManager(DummyHandsfreeManager):
                 self.track_info["artist"] = value.get("Artist", "")
                 self.track_info["album"] = value.get("Album", "")
 
+        if not self.bluez_mediaplayer:
+            # Try to find the MediaPlayer instance since we don't have it.
+            self._obtain_bluez_mediaplayer()
+
     def _set_bluealsa_volume(self, type, numid, value):
         if subprocess.run(['amixer', '-D', 'bluealsa', 'cset', 'numid=' + str(numid), value + "%"], capture_output=True).returncode != 0:
             self.logger.warning("Nonzero exit code while setting " + type + " volume")
+
+    def _obtain_bluez_mediaplayer(self):
+        # Obtain MediaPlayer interface from DBUS so we can get track information
+        obj = self.bus.get_object('org.bluez', "/")
+        mgr = dbus.Interface(obj, 'org.freedesktop.DBus.ObjectManager')
+        for path, ifaces in mgr.GetManagedObjects().items():
+            if 'org.bluez.MediaPlayer1' in ifaces:
+                self.bluez_mediaplayer = dbus.Interface(
+                    self.bus.get_object('org.bluez', path),
+                    'org.bluez.MediaPlayer1')
+
+                self.logger.info("Obtained MediaPlayer DBus Interface")
+                break
+
+        if not self.bluez_mediaplayer:
+            self.logger.warning("Failed to find MediaPlayer Dbus interface")
 
     # Callback for DBus to detect when to set the volumes for A2DP and SCO
     def _on_bluealsa_pcm_added(self, path, properties):
@@ -106,16 +126,7 @@ class HandsfreeManager(DummyHandsfreeManager):
         self._set_bluealsa_volume("SCO capture", 4, self.audio_manager.config['audio']['sco-volume-receive'])
 
     def on_device_connected(self, name, address, strength):
-        # Obtain MediaPlayer interface from DBUS so we can get track information
-        obj = self.bus.get_object('org.bluez', "/")
-        mgr = dbus.Interface(obj, 'org.freedesktop.DBus.ObjectManager')
-        for path, ifaces in mgr.GetManagedObjects().items():
-            if 'org.bluez.MediaPlayer1' in ifaces:
-                self.bluez_mediaplayer = dbus.Interface(
-                    self.bus.get_object('org.bluez', path),
-                    'org.bluez.MediaPlayer1')
-        if not self.bluez_mediaplayer:
-            self.logger.warning("Failed to find MediaPlayer Dbus interface for BT device: " + address)
+        self._obtain_bluez_mediaplayer()
 
     def on_device_disconnected(self, name, address):
         self.bluez_mediaplayer = None
