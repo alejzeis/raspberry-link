@@ -50,6 +50,8 @@ class AudioManager:
 
         atexit.register(self._exit_handler)
 
+        self._attempt_reconnect()
+
         self.poll_thread = Thread(target=self._poll, daemon=True)
         self.poll_thread.start()
 
@@ -74,16 +76,7 @@ class AudioManager:
                 address = properties.Get("org.bluez.Device1", "Address")
                 rssi = -1  #properties.Get("org.bluez.Device1", "RSSI")
 
-                logger.info("Device connected: " + name + " with address " + address)
-                self.connected_device = {
-                    "connected": True,
-                    "name": name,
-                    "address": address,
-                    "signal_strength": rssi
-                }
-
-                self.router.on_start_media_playback()
-                self.handsfree_mgr.on_device_connected(name, address, rssi)
+                self._on_device_connected(name, address, rssi)
 
                 # Save bluetooth address to try to automatically reconnect on next startup
                 f = open('/var/cache/raspberrylink-last-device', 'w')
@@ -110,6 +103,18 @@ class AudioManager:
 
         self.handsfree_mgr.on_dbus_bluez_property_changed(interface, changed, invalidated)
 
+    def _on_device_connected(self, name, address, rssi):
+        logger.info("Device connected: " + name + " with address " + address)
+        self.connected_device = {
+            "connected": True,
+            "name": name,
+            "address": address,
+            "signal_strength": rssi
+        }
+
+        self.router.on_start_media_playback()
+        self.handsfree_mgr.on_device_connected(name, address, rssi)
+
     # Called by the Handsfree manager when there is an active call
     def on_call_active(self):
         # check to make sure we haven't already started routing call audio for the device
@@ -120,20 +125,27 @@ class AudioManager:
         self.router.on_start_call()
         self.call_audio_routing_begun = True
 
-    def attempt_reconnect(self, conf):
+    def _attempt_reconnect(self):
         f = open("/var/cache/raspberrylink-last-device", 'r')
         device_path = f.readline()
         f.close()
 
         device = self.bus.get_object('org.bluez', device_path)
-        iface_h = dbus.Interface(device, 'org.bluez.Device1')
+        device_interface = dbus.Interface(device, 'org.bluez.Device1')
+        properties = dbus.Interface(device_interface, 'org.freedesktop.DBus.Properties')
 
         logger.info("Attempting to connect to previously-connected device: " + device_path)
-        connected = iface_h.IsConnected()
+        connected = properties.Get("org.bluez.Device1", "Connected")
         if not connected:
             try:
-                iface_h.Connect()
+                device_interface.Connect()
                 logger.info("Successfully connected to device " + device_path)
+
+                name = properties.Get("org.bluez.Device1", "Name")
+                address = properties.Get("org.bluez.Device1", "Address")
+                rssi = -1  # properties.Get("org.bluez.Device1", "RSSI")
+
+                self._on_device_connected(name, address, rssi)
             except:
                 logger.warning("Failed to connect to previously-connected device: " + device_path)
         else:
