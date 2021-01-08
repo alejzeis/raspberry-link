@@ -3,7 +3,6 @@ from logging import getLogger, INFO
 
 import threading
 from waitress import serve
-from time import sleep
 
 from raspberrylink import config
 from raspberrylink.audio import core as audio_core
@@ -17,9 +16,6 @@ api_version_minor = 1
 # This needs to be called after startup()
 def run_server(logger, audio_manager, server_config):
     host, port = server_config['server']['interface'], server_config['server']['port']
-
-    sleep(2)
-    audio_manager.attempt_reconnect(server_config)
 
     app = Flask(__name__)
 
