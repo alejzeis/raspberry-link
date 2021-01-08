@@ -68,7 +68,8 @@ class AudioManager:
             device = dbus.Interface(self.bus.get_object("org.bluez", path), "org.bluez.Device1")
             properties = dbus.Interface(device, "org.freedesktop.DBus.Properties")
 
-            if properties.Get("org.bluez.Device1", "Connected"):
+            # Want to make sure that we're not already connected, otherwise this is a completely different device!
+            if properties.Get("org.bluez.Device1", "Connected") and not self.connected_device["connected"]:
                 name = properties.Get("org.bluez.Device1", "Name")
                 address = properties.Get("org.bluez.Device1", "Address")
                 rssi = properties.Get("org.bluez.Device1", "RSSI")
@@ -92,18 +93,20 @@ class AudioManager:
                 name = properties.Get("org.bluez.Device1", "Name")
                 address = properties.Get("org.bluez.Device1", "Address")
 
-                logger.info("Device disconnected: " + name + " with address " + address)
-                self.connected_device = {
-                    "connected": False,
-                    "name": "Unknown",
-                    "address": "",
-                    "signal_strength": 0
-                }
+                # Making sure thet device that we detected as disconnected is the same one that was actually connected
+                if address == self.connected_device["address"]:
+                    logger.info("Device disconnected: " + name + " with address " + address)
+                    self.connected_device = {
+                        "connected": False,
+                        "name": "Unknown",
+                        "address": "",
+                        "signal_strength": 0
+                    }
 
-                self.router.on_stop_media_playback()
-                self.handsfree_mgr.on_device_disconnected(name, address)
-                self.call_audio_routing_begun = False
-                self.router.on_end_call()
+                    self.router.on_stop_media_playback()
+                    self.handsfree_mgr.on_device_disconnected(name, address)
+                    self.call_audio_routing_begun = False
+                    self.router.on_end_call()
 
         self.handsfree_mgr.on_dbus_bluez_property_changed(interface, changed, invalidated)
 
