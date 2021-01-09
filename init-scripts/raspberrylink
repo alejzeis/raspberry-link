@@ -1,0 +1,19 @@
+#!/sbin/openrc-run
+
+# OpenRC Init script for RaspberryLink
+
+depend() {
+    need bluetooth dbus ofono
+}
+
+start() {
+    ebegin "Starting RaspberryLink Server"
+    start-stop-daemon --background --start --exec /usr/bin/raspilink --make-pidfile --pidfile /run/raspberrylink.pid
+    eend $?
+}
+
+stop() {
+    ebegin "Stopping RaspberryLink Server"
+    start-stop-daemon --stop --exec /usr/bin/raspilink --pidfile /run/raspberrylink.pid
+    eend $?
+}

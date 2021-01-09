@@ -3,6 +3,7 @@ from threading import Thread
 from time import sleep
 
 import atexit
+import os
 import logging
 
 import dbus
@@ -12,7 +13,10 @@ from raspberrylink.audio import handsfree, routing
 
 
 logger = logging.getLogger("RL-Audio")
-logger.setLevel(logging.INFO)
+if os.getenv("RASPILINK_DEBUG") == "1":
+    logger.setLevel(logging.DEBUG)
+else:
+    logger.setLevel(logging.INFO)
 
 
 class AudioManager:
@@ -139,7 +143,7 @@ class AudioManager:
         if not connected:
             try:
                 device_interface.Connect()
-                logger.info("Successfully connected to device " + device_path)
+                logger.info("Successfully connected to previously-connected device: " + device_path)
 
                 name = properties.Get("org.bluez.Device1", "Name")
                 address = properties.Get("org.bluez.Device1", "Address")

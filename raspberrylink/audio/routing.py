@@ -68,7 +68,6 @@ class PhysicalAudioRouter(AudioRouter):
             self.arec_mic = None
 
         device_id = self.audio_manager.connected_device['address']
-        print("Piping mic input to device " + device_id)
         # Pipe Arecord output to Aplay to send over the SCO link
         self.arec_mic = Popen([self.arecord_exec, "-D", self.audio_manager.config['audio']['arecord-device'],
                                "-f", self.audio_manager.config['audio']['arecord-format'],

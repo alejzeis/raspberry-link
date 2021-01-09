@@ -1,4 +1,4 @@
-from time import sleep
+import os
 import dbus
 import dbus.mainloop.glib
 import logging
@@ -70,7 +70,10 @@ class HandsfreeManager(DummyHandsfreeManager):
         super().__init__()
         self.audio_manager = audio_manager
 
-        self.logger.setLevel(logging.INFO)
+        if os.getenv("RASPILINK_DEBUG") == "1":
+            self.logger.setLevel(logging.DEBUG)
+        else:
+            self.logger.setLevel(logging.INFO)
 
         self.bus = dbus.SystemBus()
         self.manager = dbus.Interface(self.bus.get_object('org.ofono', '/'), 'org.ofono.Manager')
@@ -83,7 +86,7 @@ class HandsfreeManager(DummyHandsfreeManager):
         self.modems = self.manager.GetModems()
 
         for modem, props in self.modems:
-            self.logger.info("Auto-detected Previous Modem: " + str(modem))
+            self.logger.debug("Found Modem: " + str(modem))
 
     # Callback for DBus to detect when the current track information changes
     def on_dbus_bluez_property_changed(self, interface, changed, invalidated):
@@ -179,7 +182,7 @@ class HandsfreeManager(DummyHandsfreeManager):
         call = dbus.Interface(self.bus.get_object('org.ofono', path), 'org.ofono.VoiceCall')
         if call:
             call.Answer()
-            self.logger.info("Answered call: " + path)
+            self.logger.debug("Answered call: " + path)
             return True
         else:
             return False
@@ -188,7 +191,7 @@ class HandsfreeManager(DummyHandsfreeManager):
         call = dbus.Interface(self.bus.get_object('org.ofono', path), 'org.ofono.VoiceCall')
         if call:
             call.Hangup()
-            self.logger.info("Hung up on call: " + path)
+            self.logger.debug("Hung up on call: " + path)
             return True
         else:
             return False
@@ -196,12 +199,12 @@ class HandsfreeManager(DummyHandsfreeManager):
     def hangup_all(self):
         vcm = dbus.Interface(self.bus.get_object("org.ofono", self.modems[0][0]), "org.ofono.VoiceCallManager")
         vcm.HangupAll()
-        self.logger.info("Hungup on all calls for " + self.modems[0][0])
+        self.logger.debug("Hungup on all calls for " + self.modems[0][0])
 
     def dial_call(self, number):
         vcm = dbus.Interface(self.bus.get_object("org.ofono", self.modems[0][0]), "org.ofono.VoiceCallManager")
         vcm.Dial(number, "default")
-        self.logger.info("Dialed number " + number + " on " + self.modems[0][0])
+        self.logger.debug("Dialed number " + number + " on " + self.modems[0][0])
 
     def music_play(self):
         if self.bluez_mediaplayer is not None:

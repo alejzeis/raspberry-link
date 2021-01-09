@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from logging import getLogger, INFO
+from logging import getLogger, INFO, DEBUG
 
 import threading
 from waitress import serve
@@ -153,12 +153,16 @@ def run_server(logger, audio_manager, server_config):
 
 def startup():
     import dbus
+    import os
     from gi.repository import GLib
 
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
     logger = getLogger("RL-Server-Main")
-    logger.setLevel(INFO)
+    if os.getenv("RASPILINK_DEBUG") == "1":
+        logger.setLevel(DEBUG)
+    else:
+        logger.setLevel(INFO)
     logger.info("Starting " + software_name + " " + software_version)
 
     server_config = config.load_server_config()
