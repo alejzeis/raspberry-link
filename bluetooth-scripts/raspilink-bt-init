@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# Modified from https://github.com/balenalabs/balena-sound/blob/master/bluetooth-audio/start.sh
+
+echo "- RaspberryLink Bluetooth Bootstrap Script"
+
+echo "- Setting output volume to " "$SYSTEM_VOLUME"
+amixer cset numid=$MIXER_NUMID $SYSTEM_VOLUME > /dev/null &
+
+# Set discoverable timeout
+echo "- Setting discoverable timeout"
+dbus-send --system --dest=org.bluez --print-reply /org/bluez/hci0 org.freedesktop.DBus.Properties.Set string:'org.bluez.Adapter1' string:'DiscoverableTimeout' variant:uint32:0 > /dev/null
+
+# Start bluetooth and audio agent
+echo "- Starting Python BlueZ Agent"
+/opt/raspberrylink/raspilink-bt-agent.py &
+
+sleep 2
+
+# Try to stop current running bluealsa process, as it isn't running with the correct profiles set
+echo "- Attempting to stop bluealsa service..."
+systemctl stop bluealsa
+rm -rf /var/run/bluealsa/
+
+if [ $CALL_SUPPORT -eq 1 ]; then
+  # Start new bluealsa process (a2dp-sink to recieve media audio, hfp-ofono to recieve call and SMS information via ofono)
+  echo "- Setting microphone input volume to " "$MICROPHONE_VOLUME"
+  amixer cset numid=$MIC_MIXER_NUMID $MICROPHONE_VOLUME > /dev/null &
+
+  echo "- Starting bluealsa process with a2dp-sink and hfp-ofono profiles."
+  # Append LD_LIBRARY_PATH so bluealsa can find fdk-aac library (since it all had to be compiled and installed from source)
+  LD_LIBRARY_PATH=/usr/local/lib bluealsa -i hci0 --a2dp-volume -p a2dp-sink -p hfp-ofono &
+else
+  echo "- Starting bluealsa process with a2dp-sink profile"
+  # Append LD_LIBRARY_PATH so bluealsa can find fdk-aac library (since it all had to be compiled and installed from source)
+  LD_LIBRARY_PATH=/usr/local/lib bluealsa -i hci0 --a2dp-volume -p a2dp-sink &
+fi
+
+# Put bluetooth interface online
+if [ $MULTIPLE_ADAPTERS -eq 1 ]; then
+  echo "- Bringing adapter " "$BT_ADAPTER_ADDR" " online"
+  printf "select %s\npower on\nexit\n" "$BT_ADAPTER_ADDR" | bluetoothctl > /dev/null
+
+  echo "- Setting adapter " "$BT_ADAPTER_ADDR" " name to " "$BT_DEVICE_NAME"
+  printf "select %s\nsystem-alias %s\nexit\n" "$BT_ADAPTER_ADDR" "$BT_DEVICE_NAME" | bluetoothctl > /dev/null
+
+  echo "- Becoming discoverable and pairable..."
+  printf "select %s\ndiscoverable on\npairable on\nexit\n" "$BT_ADAPTER_ADDR" | bluetoothctl > /dev/null
+else
+  echo "- Bringing default adapter online"
+  bluetoothctl power on
+
+  echo "- Setting default adapter name to " "$BT_DEVICE_NAME"
+  printf "system-alias %s\nexit\n" "$BT_DEVICE_NAME" | bluetoothctl > /dev/null
+
+  echo "- Becoming discoverable and pairable..."
+  printf "discoverable on\npairable on\nexit\n" | bluetoothctl > /dev/null
+fi
+
+echo "- Bootstrap script complete."

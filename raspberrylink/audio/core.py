@@ -1,200 +1,202 @@
 from subprocess import run
 from threading import Thread
-from socket import socket, AF_UNIX, SOCK_STREAM
-from sys import exit
-from os import remove
 from time import sleep
 
 import atexit
+import os
 import logging
-import queue
 
-from gi.repository import GLib
 import dbus
 import dbus.mainloop.glib
 
-from raspberrylink import config, util
 from raspberrylink.audio import handsfree, routing
 
 
 logger = logging.getLogger("RL-Audio")
-logger.setLevel(logging.INFO)
+if os.getenv("RASPILINK_DEBUG") == "1":
+    logger.setLevel(logging.DEBUG)
+else:
+    logger.setLevel(logging.INFO)
+
+device_cache_file = "/var/cache/raspberrylink-last-device"
 
 
 class AudioManager:
     handsfree_mgr = None
 
-    socket_file = ""
-    sock = None
-    socket_send_queue = None
-    active_socket_connection = None
-    recv_thread = None
-    poll_thread = None
-
-    call_support = False
     router = None
     config = None
 
-    device_connected = False
+    connected_device = {
+        "connected": False,
+        "name": "Unknown",
+        "address": "",
+        "signal_strength": 0
+    }
+    call_support = False
     call_audio_routing_begun = False
 
-    def __init__(self, conf, socket_file="/run/raspberrylink_audio.socket"):
-        self.config = conf
-        self.socket_file = socket_file
-        self.call_support = conf['audio'].getboolean("handsfree-enabled")
-        if self.call_support:
-            logger.warning("Experimental handsfree support is enabled. This feature may not work as well as intended"
-                           ", or may not work at all.")
-            self.handsfree_mgr = handsfree.HandsfreeManager(self)
-        else:
-            self.handsfree_mgr = handsfree.DummyHandsfreeManager()
+    bus = None
 
-        self.sock = socket(AF_UNIX, SOCK_STREAM)
-        self.sock.bind(socket_file)
-        logger.debug("Bound socket to " + socket_file)
-        self.socket_send_queue = queue.Queue()
+    poll_thread = None
+
+    def __init__(self, conf):
+        self.config = conf
+        self.call_support = self.config['audio'].getboolean("call-support-enabled")
+
+        self.handsfree_mgr = handsfree.HandsfreeManager(self)
 
         self.router = routing.PhysicalAudioRouter(self)
 
+        self.bus = dbus.SystemBus()
+        self.bus.add_signal_receiver(
+            self._on_dbus_device_property_changed,
+            bus_name='org.bluez',
+            signal_name='PropertiesChanged',
+            dbus_interface='org.freedesktop.DBus.Properties',
+            path_keyword='path'
+        )
+
         atexit.register(self._exit_handler)
 
-        self.recv_thread = Thread(target=self._recv_data, daemon=True)
-        self.recv_thread.start()
+        self._attempt_reconnect()
 
-        self.poll_thread = Thread(target=self._poll, daemon=True)
-        self.poll_thread.start()
+        if self.call_support:
+            self.poll_thread = Thread(target=self._poll, daemon=True)
+            self.poll_thread.start()
 
     def _exit_handler(self):
-        if self.active_socket_connection is not None:
-            self.active_socket_connection.close()
-
-        self.sock.close()
-
-        remove(self.socket_file)  # Closing the socket doesn't actually delete the file
-
         self.router.on_stop_media_playback()
-        self.router.on_end_call()
+        if self.call_support:
+            self.router.on_end_call()
 
     def _poll(self):
         logger.info("Starting Polling Thread")
         while True:
-            self._poll_connections()
-            if self.call_support:
-                self.handsfree_mgr.poll()
+            self.handsfree_mgr.poll()
+            sleep(1)
 
-            sleep(0.5)
+    def _on_dbus_device_property_changed(self, interface, changed, invalidated, path):
+        if interface == "org.bluez.Device1":
+            device = dbus.Interface(self.bus.get_object("org.bluez", path), "org.bluez.Device1")
+            properties = dbus.Interface(device, "org.freedesktop.DBus.Properties")
 
-    def _poll_connections(self):
-        # Check if a device has connected recently, and then start media playback or end it
-        new_status = util.get_device_connected()
-        if not self.device_connected and new_status[0]:
-            self.router.on_start_media_playback()
-            self.handsfree_mgr.on_device_connected(new_status[1])
+            # Want to make sure that we're not already connected, otherwise this is a completely different device!
+            if properties.Get("org.bluez.Device1", "Connected") and not self.connected_device["connected"]:
+                name = properties.Get("org.bluez.Device1", "Name")
+                address = properties.Get("org.bluez.Device1", "Address")
+                rssi = -1  #properties.Get("org.bluez.Device1", "RSSI")
 
-            # Save bluetooth address to try to automatically reconnect on next startup
-            f = open('/var/cache/bluetooth/reconnect_device', 'w')
-            f.write(new_status[1])
-            f.close()
-        elif self.device_connected and not new_status[0]:
-            self.router.on_stop_media_playback()
-            self.handsfree_mgr.on_device_disconnected(new_status[1])
-            if self.call_support:  # Stop call audio routing if supported
-                # Reset call audio routing variable since we don't have a device connected anymore
-                self.call_audio_routing_begun = False
-                self.router.on_end_call()
+                self._on_device_connected(name, address, rssi)
 
-        self.device_connected = new_status[0]
+                # Save bluetooth address to try to automatically reconnect on next startup
+                f = open(device_cache_file, 'w')
+                f.write(path)
+                f.close()
+            else:
+                name = properties.Get("org.bluez.Device1", "Name")
+                address = properties.Get("org.bluez.Device1", "Address")
+
+                # Making sure thet device that we detected as disconnected is the same one that was actually connected
+                if address == self.connected_device["address"]:
+                    logger.info("Device disconnected: " + name + " with address " + address)
+                    self.connected_device = {
+                        "connected": False,
+                        "name": "Unknown",
+                        "address": "",
+                        "signal_strength": 0
+                    }
+
+                    self.router.on_stop_media_playback()
+                    self.handsfree_mgr.on_device_disconnected(name, address)
+                    if self.call_support:
+                        self.call_audio_routing_begun = False
+                        self.router.on_end_call()
+
+        self.handsfree_mgr.on_dbus_bluez_property_changed(interface, changed, invalidated)
+
+    def _on_device_connected(self, name, address, rssi):
+        logger.info("Device connected: " + name + " with address " + address)
+        self.connected_device = {
+            "connected": True,
+            "name": name,
+            "address": address,
+            "signal_strength": rssi
+        }
+
+        self.router.on_start_media_playback()
+        self.handsfree_mgr.on_device_connected(name, address, rssi)
 
     # Called by the Handsfree manager when there is an active call
     def on_call_active(self):
         # check to make sure we haven't already started routing call audio for the device
-        if not self.call_support or self.call_audio_routing_begun:
+        if self.call_audio_routing_begun:
             return
 
         # start routing call audio
         self.router.on_start_call()
         self.call_audio_routing_begun = True
 
-    def _recv_data(self):
-        logger.info("Started Socket Receive thread")
-        self.sock.listen(1)
+    def _attempt_reconnect(self):
+        if not os.path.exists(device_cache_file):
+            return
 
-        while True:
-            self.active_socket_connection, addr = self.sock.accept()
-            logger.debug("Accepted socket connection")
-            self.active_socket_connection.setblocking(False)
+        f = open(device_cache_file, 'r')
+        device_path = f.readline()
+        f.close()
 
-            while True:
-                # Check if the connection was closed
-                if self.active_socket_connection.fileno() == -1:
-                    logger.info("Socket connection closed.")
-                    break
+        try:
+            device = self.bus.get_object('org.bluez', device_path)
+            device_interface = dbus.Interface(device, 'org.bluez.Device1')
+            properties = dbus.Interface(device_interface, 'org.freedesktop.DBus.Properties')
 
+            logger.info("Attempting to connect to previously-connected device: " + device_path)
+            connected = properties.Get("org.bluez.Device1", "Connected")
+            if not connected:
                 try:
-                    raw = self.active_socket_connection.recv(512)
-                    if len(raw) > 1:
-                        data = raw.decode("UTF-8").split("~")
+                    device_interface.Connect()
+                    logger.info("Successfully connected to previously-connected device: " + device_path)
 
-                        if data[0] == "CALL-ANSWER":
-                            # Answer the specified call
-                            self.handsfree_mgr.answer_call(data[1])
-                        elif data[0] == "CALL-HANGUP":
-                            # Hangup the specified call
-                            self.handsfree_mgr.hangup_call(data[1])
-                        elif data[0] == "MEDIA-PLAY":
-                            self.handsfree_mgr.music_play()
-                        elif data[0] == "MEDIA-PAUSE":
-                            self.handsfree_mgr.music_pause()
+                    name = properties.Get("org.bluez.Device1", "Name")
+                    address = properties.Get("org.bluez.Device1", "Address")
+                    rssi = -1  # properties.Get("org.bluez.Device1", "RSSI")
 
-                except BlockingIOError:
-                    pass
-
-                if not self.socket_send_queue.empty():
-                    self.active_socket_connection.send(self.socket_send_queue.get())
-
-                sleep(0.2)
+                    self._on_device_connected(name, address, rssi)
+                    self.handsfree_mgr.set_volumes()
+                except Exception as e:
+                    logger.warning("Failed to connect to previously-connected device: " + device_path + ", " + str(e))
+            else:
+                logger.info("Already connected to device")
+        except dbus.DBusException as e:
+            logger.debug("DBus call failed while trying to reconnect to previous device: " + str(e))
 
 
 # Entry function for raspilink-audio
-def bootstrap():
-    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-
-    logger.info("Starting RaspberryLink Bluetooth Audio Service...")
-
-    conf = config.load_server_config()
+def bootstrap(conf):
     if not conf['audio'].getboolean("enabled"):
-        logger.error("Audio support not enabled in RaspberryLink Server config. Exiting")
-        exit(1)
+        logger.error("Audio support not enabled in RaspberryLink Server config.")
+        return
 
-    handsfree_support = conf['audio'].getboolean("handsfree-enabled")
+    call_support = conf['audio'].getboolean('call-support-enabled')
     name = conf['audio']['bt-name']
     adapter_address = conf['audio']['bt-adapter-address']
     volume = conf['audio']['physical-output-volume'] + "%"
     mixer_numid = conf['audio']['mixer-numid-output']
     mic_mixer_numid = conf['audio']['mixer-numid-input']
     mic_volume = conf['audio']['physical-input-volume'] + "%"
-    a2dp_volume = conf['audio']['a2dp-volume'] + "%"
-    sco_volume_send = conf['audio']['sco-volume-send'] + "%"
-    sco_volume_recv = conf['audio']['sco-volume-receive'] + "%"
 
-    cmd = "HANDSFREE=" + str(int(handsfree_support)) + " BLUETOOTH_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume \
+    cmd = "CALL_SUPPORT=" + str(int(call_support)) + " BT_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume \
           + " MIXER_NUMID=" + mixer_numid + " MIC_MIXER_NUMID=" + mic_mixer_numid \
           + " MICROPHONE_VOLUME=" + mic_volume \
-          + " A2DP_VOLUME=" + a2dp_volume + " SCO_VOLUME_SEND=" + sco_volume_send \
-          + " SCO_VOLUME_RECV=" + sco_volume_recv \
-          + " /usr/src/raspberrylink/raspilink-audio-start"
+          + " /opt/raspberrylink/raspilink-bt-init"
 
     if adapter_address != "00:00:00:00:00:00":
         cmd = "MULTIPLE_ADAPTERS=1 BT_ADAPTER_ADDR=" + adapter_address + " " + cmd
     else:
         cmd = "MULTIPLE_ADAPTERS=0 " + cmd
 
-    logger.info("Running bootstrap script: " + cmd)
+    logger.info("Handsfree call support enabled: " + str(call_support))
+    logger.info("Running audio bootstrap script: " + cmd)
     run(cmd, shell=True)
 
-    AudioManager(conf)
-
-    logger.info("Done! Starting GLib Main Loop.")
-
-    mainloop = GLib.MainLoop()
-    mainloop.run()
+    return AudioManager(conf)
