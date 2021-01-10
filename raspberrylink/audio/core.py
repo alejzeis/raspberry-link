@@ -185,7 +185,7 @@ def bootstrap(conf):
     mic_mixer_numid = conf['audio']['mixer-numid-input']
     mic_volume = conf['audio']['physical-input-volume'] + "%"
 
-    cmd = "CALL_SUPPORT=" + str(int(call_support)) + "BT_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume \
+    cmd = "CALL_SUPPORT=" + str(int(call_support)) + " BT_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume \
           + " MIXER_NUMID=" + mixer_numid + " MIC_MIXER_NUMID=" + mic_mixer_numid \
           + " MICROPHONE_VOLUME=" + mic_volume \
           + " /opt/raspberrylink/raspilink-bt-init"

@@ -22,7 +22,7 @@ echo "- Attempting to stop bluealsa service..."
 systemctl stop bluealsa
 rm -rf /var/run/bluealsa/
 
-if [ $CALL_SUPPORT -eq 1]; then
+if [ $CALL_SUPPORT -eq 1 ]; then
   # Start new bluealsa process (a2dp-sink to recieve media audio, hfp-ofono to recieve call and SMS information via ofono)
   echo "- Setting microphone input volume to " "$MICROPHONE_VOLUME"
   amixer cset numid=$MIC_MIXER_NUMID $MICROPHONE_VOLUME > /dev/null &
