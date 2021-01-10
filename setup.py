@@ -6,7 +6,7 @@ __author__ = "jython234"
 
 setup(
     name='raspberrylink',
-    version='2.0-git',
+    version='2.0.0+git',
     description='Raspberry Pi based handsfree audio server for automotive settings',
     author=__author__,
     author_email='jython234@gmail.com',
