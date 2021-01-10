@@ -18,6 +18,8 @@ if os.getenv("RASPILINK_DEBUG") == "1":
 else:
     logger.setLevel(logging.INFO)
 
+device_cache_file = "/var/cache/raspberrylink-last-device"
+
 
 class AudioManager:
     handsfree_mgr = None
@@ -83,7 +85,7 @@ class AudioManager:
                 self._on_device_connected(name, address, rssi)
 
                 # Save bluetooth address to try to automatically reconnect on next startup
-                f = open('/var/cache/raspberrylink-last-device', 'w')
+                f = open(device_cache_file, 'w')
                 f.write(path)
                 f.close()
             else:
@@ -130,13 +132,19 @@ class AudioManager:
         self.call_audio_routing_begun = True
 
     def _attempt_reconnect(self):
-        f = open("/var/cache/raspberrylink-last-device", 'r')
+        if not os.path.exists(device_cache_file):
+            return
+
+        f = open(device_cache_file, 'r')
         device_path = f.readline()
         f.close()
 
-        device = self.bus.get_object('org.bluez', device_path)
-        device_interface = dbus.Interface(device, 'org.bluez.Device1')
-        properties = dbus.Interface(device_interface, 'org.freedesktop.DBus.Properties')
+        try:
+            device = self.bus.get_object('org.bluez', device_path)
+            device_interface = dbus.Interface(device, 'org.bluez.Device1')
+            properties = dbus.Interface(device_interface, 'org.freedesktop.DBus.Properties')
+        except Exception as e:
+            logger.debug("DBus call failed while trying to reconnect to previous device: " + str(e))
 
         logger.info("Attempting to connect to previously-connected device: " + device_path)
         connected = properties.Get("org.bluez.Device1", "Connected")
@@ -151,8 +159,8 @@ class AudioManager:
 
                 self._on_device_connected(name, address, rssi)
                 self.handsfree_mgr.set_volumes()
-            except:
-                logger.warning("Failed to connect to previously-connected device: " + device_path)
+            except Exception as e:
+                logger.warning("Failed to connect to previously-connected device: " + device_path + ", " + str(e))
         else:
             logger.info("Already connected to device")
 

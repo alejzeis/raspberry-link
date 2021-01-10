@@ -24,6 +24,7 @@ setup(
         ('/opt/raspberrylink/service-files', ['init-scripts/raspberrylink-agent.service',
                                               'init-scripts/raspberrylink.service', 'init-scripts/raspberrylink'],
          ),
-        ('/opt/raspberrylink', ['bluetooth-scripts/raspilink-bt-init', 'bluetooth-scripts/raspilink-bt-agent.py'])
+        ('/opt/raspberrylink', ['bluetooth-scripts/raspilink-bt-init', 'bluetooth-scripts/raspilink-bt-agent.py']),
+        ('/etc/', ['default-config/raspberrylink-server.conf'])
     ]
 )
