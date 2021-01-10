@@ -1,4 +1,4 @@
-# raspberry-link
+# raspberry-link ![PyPI - Downloads](https://img.shields.io/pypi/dm/raspberrylink?style=flat-square&label=downloads%20-%20PyPi) ![GitHub release (latest by date)](https://img.shields.io/github/downloads/jython234/raspberry-link/latest/total?style=flat-square&label=downloads%20-%20GitHub) ![PyPI - License](https://img.shields.io/pypi/l/raspberrylink?style=flat-square)
 A handsfree audio program for use with a Raspberry Pi in a car to add bluetooth audio to a "legacy" stereo.
 
 For installation information visit the [wiki](https://github.com/jython234/raspberry-link/wiki/Installation)

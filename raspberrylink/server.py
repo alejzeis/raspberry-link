@@ -8,7 +8,7 @@ from raspberrylink import config
 from raspberrylink.audio import core as audio_core
 
 software_name = "RaspberryLink-Server"
-software_version = "2.0.0+git"
+software_version = "2.0.1+git"
 api_version_major = 5
 api_version_minor = 3
 
