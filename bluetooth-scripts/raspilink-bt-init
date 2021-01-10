@@ -22,13 +22,19 @@ echo "- Attempting to stop bluealsa service..."
 systemctl stop bluealsa
 rm -rf /var/run/bluealsa/
 
-# Start new bluealsa process (a2dp-sink to recieve media audio, hfp-ofono to recieve call and SMS information via ofono)
-echo "- Setting microphone input volume to " "$MICROPHONE_VOLUME"
-amixer cset numid=$MIC_MIXER_NUMID $MICROPHONE_VOLUME > /dev/null &
+if [ $CALL_SUPPORT -eq 1]; then
+  # Start new bluealsa process (a2dp-sink to recieve media audio, hfp-ofono to recieve call and SMS information via ofono)
+  echo "- Setting microphone input volume to " "$MICROPHONE_VOLUME"
+  amixer cset numid=$MIC_MIXER_NUMID $MICROPHONE_VOLUME > /dev/null &
 
-echo "- Starting bluealsa process with a2dp-sink and hfp-ofono profiles."
-# Append LD_LIBRARY_PATH so bluealsa can find fdk-aac library (since it all had to be compiled and installed from source)
-LD_LIBRARY_PATH=/usr/local/lib bluealsa -i hci0 --a2dp-volume -p a2dp-sink -p hfp-ofono &
+  echo "- Starting bluealsa process with a2dp-sink and hfp-ofono profiles."
+  # Append LD_LIBRARY_PATH so bluealsa can find fdk-aac library (since it all had to be compiled and installed from source)
+  LD_LIBRARY_PATH=/usr/local/lib bluealsa -i hci0 --a2dp-volume -p a2dp-sink -p hfp-ofono &
+else
+  echo "- Starting bluealsa process with a2dp-sink profile"
+  # Append LD_LIBRARY_PATH so bluealsa can find fdk-aac library (since it all had to be compiled and installed from source)
+  LD_LIBRARY_PATH=/usr/local/lib bluealsa -i hci0 --a2dp-volume -p a2dp-sink &
+fi
 
 # Put bluetooth interface online
 if [ $MULTIPLE_ADAPTERS -eq 1 ]; then

@@ -33,6 +33,7 @@ class AudioManager:
         "address": "",
         "signal_strength": 0
     }
+    call_support = False
     call_audio_routing_begun = False
 
     bus = None
@@ -41,6 +42,8 @@ class AudioManager:
 
     def __init__(self, conf):
         self.config = conf
+        self.call_support = self.config['audio'].getboolean("call-support-enabled")
+
         self.handsfree_mgr = handsfree.HandsfreeManager(self)
 
         self.router = routing.PhysicalAudioRouter(self)
@@ -58,12 +61,14 @@ class AudioManager:
 
         self._attempt_reconnect()
 
-        self.poll_thread = Thread(target=self._poll, daemon=True)
-        self.poll_thread.start()
+        if self.call_support:
+            self.poll_thread = Thread(target=self._poll, daemon=True)
+            self.poll_thread.start()
 
     def _exit_handler(self):
         self.router.on_stop_media_playback()
-        self.router.on_end_call()
+        if self.call_support:
+            self.router.on_end_call()
 
     def _poll(self):
         logger.info("Starting Polling Thread")
@@ -104,8 +109,9 @@ class AudioManager:
 
                     self.router.on_stop_media_playback()
                     self.handsfree_mgr.on_device_disconnected(name, address)
-                    self.call_audio_routing_begun = False
-                    self.router.on_end_call()
+                    if self.call_support:
+                        self.call_audio_routing_begun = False
+                        self.router.on_end_call()
 
         self.handsfree_mgr.on_dbus_bluez_property_changed(interface, changed, invalidated)
 
@@ -143,26 +149,26 @@ class AudioManager:
             device = self.bus.get_object('org.bluez', device_path)
             device_interface = dbus.Interface(device, 'org.bluez.Device1')
             properties = dbus.Interface(device_interface, 'org.freedesktop.DBus.Properties')
-        except Exception as e:
+
+            logger.info("Attempting to connect to previously-connected device: " + device_path)
+            connected = properties.Get("org.bluez.Device1", "Connected")
+            if not connected:
+                try:
+                    device_interface.Connect()
+                    logger.info("Successfully connected to previously-connected device: " + device_path)
+
+                    name = properties.Get("org.bluez.Device1", "Name")
+                    address = properties.Get("org.bluez.Device1", "Address")
+                    rssi = -1  # properties.Get("org.bluez.Device1", "RSSI")
+
+                    self._on_device_connected(name, address, rssi)
+                    self.handsfree_mgr.set_volumes()
+                except Exception as e:
+                    logger.warning("Failed to connect to previously-connected device: " + device_path + ", " + str(e))
+            else:
+                logger.info("Already connected to device")
+        except dbus.DBusException as e:
             logger.debug("DBus call failed while trying to reconnect to previous device: " + str(e))
-
-        logger.info("Attempting to connect to previously-connected device: " + device_path)
-        connected = properties.Get("org.bluez.Device1", "Connected")
-        if not connected:
-            try:
-                device_interface.Connect()
-                logger.info("Successfully connected to previously-connected device: " + device_path)
-
-                name = properties.Get("org.bluez.Device1", "Name")
-                address = properties.Get("org.bluez.Device1", "Address")
-                rssi = -1  # properties.Get("org.bluez.Device1", "RSSI")
-
-                self._on_device_connected(name, address, rssi)
-                self.handsfree_mgr.set_volumes()
-            except Exception as e:
-                logger.warning("Failed to connect to previously-connected device: " + device_path + ", " + str(e))
-        else:
-            logger.info("Already connected to device")
 
 
 # Entry function for raspilink-audio
@@ -171,6 +177,7 @@ def bootstrap(conf):
         logger.error("Audio support not enabled in RaspberryLink Server config.")
         return
 
+    call_support = conf['audio'].getboolean('call-support-enabled')
     name = conf['audio']['bt-name']
     adapter_address = conf['audio']['bt-adapter-address']
     volume = conf['audio']['physical-output-volume'] + "%"
@@ -178,7 +185,7 @@ def bootstrap(conf):
     mic_mixer_numid = conf['audio']['mixer-numid-input']
     mic_volume = conf['audio']['physical-input-volume'] + "%"
 
-    cmd = "BT_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume \
+    cmd = "CALL_SUPPORT=" + str(int(call_support)) + "BT_DEVICE_NAME=" + name + " SYSTEM_VOLUME=" + volume \
           + " MIXER_NUMID=" + mixer_numid + " MIC_MIXER_NUMID=" + mic_mixer_numid \
           + " MICROPHONE_VOLUME=" + mic_volume \
           + " /opt/raspberrylink/raspilink-bt-init"
@@ -188,6 +195,7 @@ def bootstrap(conf):
     else:
         cmd = "MULTIPLE_ADAPTERS=0 " + cmd
 
+    logger.info("Handsfree call support enabled: " + str(call_support))
     logger.info("Running audio bootstrap script: " + cmd)
     run(cmd, shell=True)
 

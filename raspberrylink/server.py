@@ -10,7 +10,7 @@ from raspberrylink.audio import core as audio_core
 software_name = "RaspberryLink-Server"
 software_version = "2.0-git"
 api_version_major = 5
-api_version_minor = 2
+api_version_minor = 3
 
 
 # This needs to be called after startup()
@@ -31,7 +31,8 @@ def run_server(logger, audio_manager, server_config):
         obj = {
             "server": software_name,
             "version": software_version,
-            "audio": server_config['audio'].getboolean("enabled")
+            "audio": server_config['audio'].getboolean("enabled"),
+            "call-support": server_config['audio'].getboolean("call-support-enabled")
         }
         return jsonify(obj)
 
@@ -50,7 +51,9 @@ def run_server(logger, audio_manager, server_config):
     @app.route('/calls/answer')
     def answer_call():
         if not server_config['audio'].getboolean("enabled"):
-            return "Audio Service is offline", 500
+            return "Audio Service is offline", 503
+        elif not server_config['audio'].getboolean("call-support"):
+            return "Server does not support call-related functions", 503
 
         path = request.args.get("path", None)
         if path is None:
@@ -68,7 +71,9 @@ def run_server(logger, audio_manager, server_config):
     @app.route('/calls/hangup')
     def hangup_call():
         if not server_config['audio'].getboolean("enabled"):
-            return "Audio Service is offline", 500
+            return "Audio Service is offline", 503
+        elif not server_config['audio'].getboolean("call-support"):
+            return "Server does not support call-related functions", 503
 
         path = request.args.get("path", None)
         if path is None:
@@ -86,7 +91,9 @@ def run_server(logger, audio_manager, server_config):
     @app.route('/calls/hangupall')
     def hangup_all_calls():
         if not server_config['audio'].getboolean("enabled"):
-            return "Audio Service is offline", 500
+            return "Audio Service is offline", 503
+        elif not server_config['audio'].getboolean("call-support"):
+            return "Server does not support call-related functions", 503
 
         try:
             audio_manager.handsfree_mgr.hangup_all()
@@ -98,7 +105,9 @@ def run_server(logger, audio_manager, server_config):
     @app.route('/calls/dial')
     def dial_call():
         if not server_config['audio'].getboolean("enabled"):
-            return "Audio Service is offline", 500
+            return "Audio Service is offline", 503
+        elif not server_config['audio'].getboolean("call-support"):
+            return "Server does not support call-related functions", 503
 
         number = request.args.get("number", None)
         if number is None:
@@ -114,7 +123,7 @@ def run_server(logger, audio_manager, server_config):
     @app.route('/media/play')
     def music_play():
         if not server_config['audio'].getboolean("enabled"):
-            return "Audio Service is offline", 500
+            return "Audio Service is offline", 503
 
         audio_manager.handsfree_mgr.music_play()
         return "", 204
@@ -130,7 +139,7 @@ def run_server(logger, audio_manager, server_config):
     @app.route('/media/skip')
     def music_skip():
         if not server_config['audio'].getboolean("enabled"):
-            return "Audio Service is offline", 500
+            return "Audio Service is offline", 503
 
         audio_manager.handsfree_mgr.music_skip()
         return "", 204
@@ -138,7 +147,7 @@ def run_server(logger, audio_manager, server_config):
     @app.route('/media/back')
     def music_back():
         if not server_config['audio'].getboolean("enabled"):
-            return "Audio Service is offline", 500
+            return "Audio Service is offline", 503
 
         audio_manager.handsfree_mgr.music_back()
         return "", 204

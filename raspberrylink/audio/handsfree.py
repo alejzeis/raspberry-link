@@ -76,17 +76,18 @@ class HandsfreeManager(DummyHandsfreeManager):
             self.logger.setLevel(logging.INFO)
 
         self.bus = dbus.SystemBus()
-        self.manager = dbus.Interface(self.bus.get_object('org.ofono', '/'), 'org.ofono.Manager')
         self.bus.add_signal_receiver(
             self._on_bluealsa_pcm_added,
             bus_name='org.bluealsa',
             signal_name='PCMAdded'
         )
 
-        self.modems = self.manager.GetModems()
+        if audio_manager.call_support:
+            self.manager = dbus.Interface(self.bus.get_object('org.ofono', '/'), 'org.ofono.Manager')
+            self.modems = self.manager.GetModems()
 
-        for modem, props in self.modems:
-            self.logger.debug("Found Modem: " + str(modem))
+            for modem, props in self.modems:
+                self.logger.debug("Found Modem: " + str(modem))
 
     # Callback for DBus to detect when the current track information changes
     def on_dbus_bluez_property_changed(self, interface, changed, invalidated):
