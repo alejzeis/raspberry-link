@@ -18,8 +18,6 @@ if os.getenv("RASPILINK_DEBUG") == "1":
 else:
     logger.setLevel(logging.INFO)
 
-device_cache_file = "/var/cache/raspberrylink-last-device"
-
 
 class AudioManager:
     handsfree_mgr = None
@@ -34,6 +32,7 @@ class AudioManager:
         "signal_strength": 0
     }
     call_support = False
+    device_cache_file = ""
     call_audio_routing_begun = False
 
     bus = None
@@ -43,6 +42,7 @@ class AudioManager:
     def __init__(self, conf):
         self.config = conf
         self.call_support = self.config['audio'].getboolean("call-support-enabled")
+        self.device_cache_file = self.config['audio']['auto-reconnect-cache-file']
 
         self.handsfree_mgr = handsfree.HandsfreeManager(self)
 
@@ -90,7 +90,7 @@ class AudioManager:
                 self._on_device_connected(name, address, rssi)
 
                 # Save bluetooth address to try to automatically reconnect on next startup
-                f = open(device_cache_file, 'w')
+                f = open(self.device_cache_file, 'w')
                 f.write(path)
                 f.close()
             else:
@@ -138,10 +138,10 @@ class AudioManager:
         self.call_audio_routing_begun = True
 
     def _attempt_reconnect(self):
-        if not os.path.exists(device_cache_file):
+        if not os.path.exists(self.device_cache_file):
             return
 
-        f = open(device_cache_file, 'r')
+        f = open(self.device_cache_file, 'r')
         device_path = f.readline()
         f.close()
 

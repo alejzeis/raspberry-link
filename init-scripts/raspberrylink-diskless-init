@@ -1,0 +1,21 @@
+#!/sbin/openrc-run
+
+# OpenRC Init script for use with RaspberryLink on diskless Alpine Linux systems
+# This script creates 2 symlinks on start, from bluetooth cache files to a storage medium so devices are remembered
+
+# Change this to the path to your mounted storage device
+STORAGE_DEVICE_PATH=/media/mmcblk0p2
+
+depend() {
+    before bluetooth
+}
+
+start() {
+    ebegin "Creating link for BlueZ data /var/lib/bluetooth to persistent storage"
+    ln -s $STORAGE_DEVICE_PATH/bluetooth-data /var/lib/bluetooth
+    eend $?
+}
+
+stop() {
+    eend $?
+}
