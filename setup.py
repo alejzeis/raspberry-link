@@ -9,7 +9,7 @@ with open("README.md", "r", encoding="utf-8") as readme:
 
 setup(
     name='raspberrylink',
-    version='2.2.0+git',
+    version='2.2.1+git',
     description='Handsfree bluetooth audio server for use in a car on a Raspberry Pi',
     author=__author__,
     author_email='jython234@gmail.com',
@@ -28,7 +28,8 @@ setup(
     python_requires=">=3.6",
     data_files=[
         ('/opt/raspberrylink/service-files', ['init-scripts/raspberrylink-agent.service',
-                                              'init-scripts/raspberrylink.service', 'init-scripts/raspberrylink'],
+                                              'init-scripts/raspberrylink.service', 'init-scripts/raspberrylink',
+                                              'init-scripts/raspberrylink-diskless-init'],
          ),
         ('/opt/raspberrylink', ['bluetooth-scripts/raspilink-bt-init', 'bluetooth-scripts/raspilink-bt-agent.py']),
         ('/etc/', ['default-config/raspberrylink-server.conf'])
