@@ -9,7 +9,7 @@ with open("README.md", "r", encoding="utf-8") as readme:
 
 setup(
     name='raspberrylink',
-    version='2.0.1+git',
+    version='2.1.0+git',
     description='Handsfree bluetooth audio server for use in a car on a Raspberry Pi',
     author=__author__,
     author_email='jython234@gmail.com',
