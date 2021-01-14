@@ -167,8 +167,9 @@ class AudioManager:
                     logger.warning("Failed to connect to previously-connected device: " + device_path + ", " + str(e))
             else:
                 logger.info("Already connected to device")
-        except dbus.DBusException as e:
-            logger.debug("DBus call failed while trying to reconnect to previous device: " + str(e))
+        except Exception as e:
+            logger.warning("Failure while obtaining DBus interface for previously connected device: "
+                           + device_path + ", " + str(e))
 
 
 # Entry function for raspilink-audio
