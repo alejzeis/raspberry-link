@@ -1,10 +1,10 @@
-# raspberry-link ![PyPI - Downloads](https://img.shields.io/pypi/dm/raspberrylink?style=flat-square&label=downloads%20-%20PyPi) ![GitHub release (latest by date)](https://img.shields.io/github/downloads/jython234/raspberry-link/latest/total?style=flat-square&label=downloads%20-%20GitHub) ![PyPI - License](https://img.shields.io/pypi/l/raspberrylink?style=flat-square)
+# raspberry-link ![PyPI - Downloads](https://img.shields.io/pypi/dm/raspberrylink?style=flat-square&label=downloads%20-%20PyPi) ![GitHub release (latest by date)](https://img.shields.io/github/downloads/alejzeis/raspberry-link/latest/total?style=flat-square&label=downloads%20-%20GitHub) ![PyPI - License](https://img.shields.io/pypi/l/raspberrylink?style=flat-square)
 A handsfree audio program for use with a Raspberry Pi in a car to add bluetooth audio to a "legacy" stereo.
 Allows connecting a phone to a raspberry pi, which will then output audio to the 3.5mm jack or a USB sound card.
 Supports control over a REST API.
 
 
-For installation information visit the [wiki page](https://github.com/jython234/raspberry-link/wiki/Installation) as there are additional steps other than just installing the .deb file or installing from PyPi
+For installation information visit the [wiki page](https://github.com/alejzeis/raspberry-link/wiki/Installation) as there are additional steps other than just installing the .deb file or installing from PyPi
 
 ### Features
 - Bluetooth Audio Support (Add handsfree support to an old car with only an AUX IN port)
