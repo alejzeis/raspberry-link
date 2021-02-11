@@ -2,7 +2,7 @@
 
 from setuptools import setup
 
-__author__ = "jython234"
+__author__ = "alejzeis"
 
 with open("README.md", "r", encoding="utf-8") as readme:
     long_description = readme.read()
@@ -12,9 +12,9 @@ setup(
     version='2.2.1+git',
     description='Handsfree bluetooth audio server for use in a car on a Raspberry Pi',
     author=__author__,
-    author_email='jython234@gmail.com',
+    author_email='alejzeis@pm.me',
     license='MPL-2.0',
-    url='https://github.com/jython234/raspberry-link',
+    url='https://github.com/alejzeis/raspberry-link',
     packages=['raspberrylink', 'raspberrylink.audio'],
     long_description=long_description,
     long_description_content_type="text/markdown",
