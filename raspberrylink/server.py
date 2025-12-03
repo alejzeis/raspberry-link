@@ -52,7 +52,7 @@ def run_server(logger, audio_manager, server_config):
     def answer_call():
         if not server_config['audio'].getboolean("enabled"):
             return "Audio Service is offline", 503
-        elif not server_config['audio'].getboolean("call-support"):
+        elif not server_config['audio'].getboolean("call-support-enabled"):
             return "Server does not support call-related functions", 503
 
         path = request.args.get("path", None)
@@ -72,7 +72,7 @@ def run_server(logger, audio_manager, server_config):
     def hangup_call():
         if not server_config['audio'].getboolean("enabled"):
             return "Audio Service is offline", 503
-        elif not server_config['audio'].getboolean("call-support"):
+        elif not server_config['audio'].getboolean("call-support-enabled"):
             return "Server does not support call-related functions", 503
 
         path = request.args.get("path", None)
@@ -92,7 +92,7 @@ def run_server(logger, audio_manager, server_config):
     def hangup_all_calls():
         if not server_config['audio'].getboolean("enabled"):
             return "Audio Service is offline", 503
-        elif not server_config['audio'].getboolean("call-support"):
+        elif not server_config['audio'].getboolean("call-support-enabled"):
             return "Server does not support call-related functions", 503
 
         try:
@@ -106,7 +106,7 @@ def run_server(logger, audio_manager, server_config):
     def dial_call():
         if not server_config['audio'].getboolean("enabled"):
             return "Audio Service is offline", 503
-        elif not server_config['audio'].getboolean("call-support"):
+        elif not server_config['audio'].getboolean("call-support-enabled"):
             return "Server does not support call-related functions", 503
 
         number = request.args.get("number", None)
